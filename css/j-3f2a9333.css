@@ -1,4 +1,10 @@
 [itd="j-3f2a9333"] {
+  overflow: hidden;
   display: unset !important;
+}
+
+[itd="j-3f2a9333"] .item-zone {
+  min-width: 200px;
+  min-height: 200px;
   color: orange;
 }
