@@ -7,6 +7,10 @@
 
     if (!loaded && ob.isIntersecting) {
       loaded = true;
+
+      const computedStyles = getCustomCssProperties(ob.target);
+      console.log(computedStyles);
+
       const jsParentPath = "js/";
       const cssParentPath = "css/";
 

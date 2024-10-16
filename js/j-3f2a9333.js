@@ -6,6 +6,14 @@
     console.log(ob.isIntersecting, ob.target, ob.intersectionRatio, ob, loaded);
     if (!loaded && ob.isIntersecting) {
       loaded = true;
+
+      for (const key in ob.target.children) {
+        const el = ob.target.children[key];
+        if (el && el.nodeType === 1) {
+          const computedStyles = getCustomCssProperties(el);
+          console.log(computedStyles, el);
+        }
+      }
     }
   };
 

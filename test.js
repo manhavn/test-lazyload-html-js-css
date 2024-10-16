@@ -1,6 +1,24 @@
 const thisTime = `t${new Date().getTime()}`;
 window[thisTime] = "itd";
 
+const cssPropertyGroup = [
+  "margin",
+  "padding",
+  "border",
+  "outline",
+  "background",
+  "font",
+  "text",
+  "list-style",
+  "flex",
+  "grid",
+  "animation",
+  "transition",
+  "overflow",
+  "position",
+  "transform",
+];
+
 const loadScript = (url, item) => {
   const script = document.createElement("script");
   script.src = url;
@@ -52,6 +70,45 @@ const getObsElements = (callback, threshold) => {
     root: document,
     threshold,
   });
+};
+
+const getCustomCssProperties = (element) => {
+  const temp = document.createElement(element.tagName);
+  const tempDiv = document.createElement("div");
+  tempDiv.style.scale = "0.001";
+  tempDiv.style.position = "absolute";
+  tempDiv.style.bottom = "0";
+  tempDiv.style.right = "0";
+  document.body.appendChild(tempDiv);
+  tempDiv.appendChild(temp);
+  const computedStyles = getComputedStyle(element);
+  const defaultStyles = getComputedStyle(temp);
+  const filteredProperties = {};
+
+  for (let i = 0; i < computedStyles.length; i++) {
+    let property = computedStyles[i];
+    if (
+      computedStyles.getPropertyValue(property) !==
+      defaultStyles.getPropertyValue(property)
+    ) {
+      const matchPropertyGroup = cssPropertyGroup.filter((val) =>
+        property.startsWith(val),
+      );
+      if (matchPropertyGroup.length > 0) {
+        matchPropertyGroup.forEach((val) => {
+          filteredProperties[val] = computedStyles.getPropertyValue(val);
+        });
+      } else {
+        filteredProperties[property] =
+          computedStyles.getPropertyValue(property);
+      }
+    }
+  }
+  tempDiv.removeChild(temp);
+  document.body.removeChild(tempDiv);
+  temp.remove();
+  tempDiv.remove();
+  return filteredProperties;
 };
 
 const listItems = {};
