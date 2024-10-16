@@ -51,15 +51,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const jsParentPath = "js/";
   const cssParentPath = "css/";
 
-  const allItem = document.querySelectorAll(`div[${window[thisTime]}]`);
+  const allItem = document.querySelectorAll(`body>div[${window[thisTime]}]`);
   allItem.forEach((item) => {
     const itemId = item.getAttribute(window[thisTime]);
     listItems[itemId] = item;
     if (item.hasAttribute("css")) {
       loadStyleCss(`${cssParentPath}${itemId}.css`);
+      item.removeAttribute("css");
     }
     if (item.hasAttribute("js")) {
       loadScript(`${jsParentPath}${itemId}.js`);
+      item.removeAttribute("js");
     }
   });
 });
