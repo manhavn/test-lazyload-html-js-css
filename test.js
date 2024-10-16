@@ -1,17 +1,25 @@
 const thisTime = `t${new Date().getTime()}`;
 window[thisTime] = "itd";
 
-const loadScript = (url) => {
+const loadScript = (url, item) => {
   const script = document.createElement("script");
   script.src = url;
   script.type = "text/javascript";
+  script.onerror = () => {
+    item.remove();
+    script.remove();
+  };
   document.head.appendChild(script);
 };
 
-const loadStyleCss = (url) => {
+const loadStyleCss = (url, item) => {
   const link = document.createElement("link");
   link.href = url;
   link.rel = "stylesheet";
+  link.onerror = () => {
+    item.remove();
+    link.remove();
+  };
   document.head.appendChild(link);
 };
 
@@ -56,11 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const itemId = item.getAttribute(window[thisTime]);
     listItems[itemId] = item;
     if (item.hasAttribute("css")) {
-      loadStyleCss(`${cssParentPath}${itemId}.css`);
+      loadStyleCss(`${cssParentPath}${itemId}.css`, item);
       item.removeAttribute("css");
     }
     if (item.hasAttribute("js")) {
-      loadScript(`${jsParentPath}${itemId}.js`);
+      loadScript(`${jsParentPath}${itemId}.js`, item);
       item.removeAttribute("js");
     }
   });

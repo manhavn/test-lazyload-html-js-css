@@ -16,11 +16,11 @@
       allItem.forEach((item) => {
         const itemId = item.getAttribute(window[thisTime]);
         if (item.hasAttribute("css")) {
-          loadStyleCss(`${cssParentPath}${itemId}.css`);
+          loadStyleCss(`${cssParentPath}${itemId}.css`, item);
           item.removeAttribute("css");
         }
         if (item.hasAttribute("js")) {
-          loadScript(`${jsParentPath}${itemId}.js`);
+          loadScript(`${jsParentPath}${itemId}.js`, item);
           item.removeAttribute("js");
         }
       });
