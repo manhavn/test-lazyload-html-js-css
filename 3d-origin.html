@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perspective Origin Example</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+        perspective: 1000px; /* Độ sâu của không gian 3D */
+      }
+
+      .container {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        transform-style: preserve-3d; /* Giữ các phần tử con trong không gian 3D */
+        animation: rotate 15s infinite linear; /* Hoạt ảnh quay */
+        perspective-origin: 100px 100px; /* Điểm gốc nhìn nằm ở giữa khối */
+      }
+
+      .face {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border: 2px solid #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        color: white;
+      }
+
+      .front {
+        background-color: #3498db;
+        transform: translateZ(100px); /* Đưa mặt trước ra ngoài */
+      }
+
+      .back {
+        background-color: #e74c3c;
+        transform: rotateY(180deg) translateZ(100px); /* Lật mặt sau */
+      }
+
+      .left {
+        background-color: #f1c40f;
+        transform: rotateY(-90deg) translateZ(100px); /* Mặt bên trái */
+      }
+
+      .right {
+        background-color: #2ecc71;
+        transform: rotateY(90deg) translateZ(100px); /* Mặt bên phải */
+      }
+
+      .top {
+        background-color: #9b59b6;
+        transform: rotateX(90deg) translateZ(100px); /* Mặt trên */
+      }
+
+      .bottom {
+        background-color: #34495e;
+        transform: rotateX(-90deg) translateZ(100px); /* Mặt dưới */
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotateX(0) rotateY(0) rotateZ(0);
+        }
+        to {
+          transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="face front">Front</div>
+      <div class="face back">Back</div>
+      <div class="face left">Left</div>
+      <div class="face right">Right</div>
+      <div class="face top">Top</div>
+      <div class="face bottom">Bottom</div>
+    </div>
+  </body>
+</html>
