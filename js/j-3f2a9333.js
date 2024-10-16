@@ -9,7 +9,7 @@
     }
   };
 
-  const observer = getObsElements(callback);
+  const observer = getObsElements(callback, 0.5);
   queryElements(key).forEach((el) => {
     observer.observe(el);
     console.log(el, key);

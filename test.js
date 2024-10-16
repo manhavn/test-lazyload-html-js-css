@@ -39,10 +39,10 @@ const getObsCallback = (callback) => {
   };
 };
 
-const getObsElements = (callback) => {
+const getObsElements = (callback, threshold) => {
   return new IntersectionObserver(getObsCallback(callback), {
     root: document,
-    threshold: 1,
+    threshold,
   });
 };
 
