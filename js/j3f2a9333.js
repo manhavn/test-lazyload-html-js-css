@@ -1,8 +1,11 @@
 (function () {
+  const wd = window[wdtkt];
   const key = getKeyScript();
   let loaded;
 
   const callback = (ob) => {
+    if (!isTop) wd.listIntersecting[key] = ob.isIntersecting;
+
     console.log(ob.isIntersecting, ob.target, ob.intersectionRatio, ob, loaded);
     if (!loaded && ob.isIntersecting) {
       loaded = true;
@@ -20,7 +23,6 @@
   const observer = getObsElements(callback, 0.5);
   queryElements(key).forEach((el) => {
     observer.observe(el);
-    console.log(el, key);
   });
 })();
 document.currentScript.remove();

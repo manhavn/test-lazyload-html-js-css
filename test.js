@@ -1,9 +1,12 @@
 const wdtkt = `${crypto.randomUUID().slice(0, 8)}${new Date().getTime()}`;
+const isTop = window === window.top;
+if (!isTop) window["dataId"] = wdtkt;
 window[wdtkt] = {
   attrItemId: "itd",
   jsSrcFolder: "js/",
   cssSrcFolder: "css/",
   listItems: {},
+  listIntersecting: {},
 };
 
 const loadScript = (url, item) => {
@@ -96,15 +99,14 @@ const getCustomCssProperties = (element) => {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  const allItem = document.querySelectorAll(
-    `body>div[${window[wdtkt].attrItemId}]`,
-  );
+  const wd = window[wdtkt];
+  const allItem = document.querySelectorAll(`body>div[${wd.attrItemId}]`);
   allItem.forEach((item) => {
-    const attrItemId = item.getAttribute(window[wdtkt].attrItemId);
-    window[wdtkt].listItems[attrItemId] = item;
-    loadStyleCss(`${window[wdtkt].cssSrcFolder}${attrItemId}.css`, item);
-    loadScript(`${window[wdtkt].jsSrcFolder}${attrItemId}.js`, item);
+    const attrItemId = item.getAttribute(wd.attrItemId);
+    wd.listItems[attrItemId] = item;
+    loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item);
+    loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item);
   });
 
-  console.log(getRandomId(), document.styleSheets, window[wdtkt]);
+  console.log(getRandomId(), document.styleSheets, wd);
 });
