@@ -1,13 +1,43 @@
-const wdtkt = `${crypto.randomUUID().slice(0, 8)}${new Date().getTime()}`;
+const getRandomId = () => {
+  return (
+    "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
+    crypto.randomUUID().slice(0, 8)
+  );
+};
+
+const wdtkt = `${getRandomId()}`;
 const isTop = window === window.top;
 if (!isTop) window["dataId"] = wdtkt;
-window[wdtkt] = {
-  attrItemId: "itd",
-  jsSrcFolder: "js/",
-  cssSrcFolder: "css/",
-  listItems: {},
-  listIntersecting: {},
-};
+
+(() => {
+  const attrItemId = "itd";
+  const jsSrcFolder = "js/";
+  const cssSrcFolder = "css/";
+  const listItems = {};
+  const listIntersecting = {};
+  const obIntersecting = {};
+  const dataApp = {
+    attrItemId,
+    jsSrcFolder,
+    cssSrcFolder,
+    listItems,
+    listIntersecting,
+    obIntersecting,
+  };
+  window[wdtkt] = dataApp;
+  setInterval(() => {
+    if (window[wdtkt] !== dataApp) window[wdtkt] = dataApp;
+    if (dataApp.attrItemId !== attrItemId) dataApp.attrItemId = attrItemId;
+    if (dataApp.jsSrcFolder !== jsSrcFolder) dataApp.jsSrcFolder = jsSrcFolder;
+    if (dataApp.cssSrcFolder !== cssSrcFolder)
+      dataApp.cssSrcFolder = cssSrcFolder;
+    if (dataApp.listItems !== listItems) dataApp.listItems = listItems;
+    if (dataApp.listIntersecting !== listIntersecting)
+      dataApp.listIntersecting = listIntersecting;
+    if (dataApp.obIntersecting !== obIntersecting)
+      dataApp.obIntersecting = obIntersecting;
+  }, 1000);
+})();
 
 const loadScript = (url, item) => {
   if (item.hasAttribute("js")) {
@@ -35,13 +65,6 @@ const loadStyleCss = (url, item) => {
     item.removeAttribute("css");
     document.head.appendChild(link);
   }
-};
-
-const getRandomId = () => {
-  return (
-    "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
-    crypto.randomUUID().slice(0, 8)
-  );
 };
 
 const getKeyScript = () => {
@@ -103,10 +126,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const allItem = document.querySelectorAll(`body>div[${wd.attrItemId}]`);
   allItem.forEach((item) => {
     const attrItemId = item.getAttribute(wd.attrItemId);
-    wd.listItems[attrItemId] = item;
     loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item);
     loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item);
+    wd.listItems[attrItemId] = item;
   });
-
-  console.log(getRandomId(), document.styleSheets, wd);
+  // console.log(document.styleSheets, wd);
 });

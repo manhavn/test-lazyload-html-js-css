@@ -4,6 +4,7 @@
   let loaded;
 
   const callback = (ob) => {
+    wd.obIntersecting[key] = ob;
     if (!isTop) wd.listIntersecting[key] = ob.isIntersecting;
 
     console.log(ob.isIntersecting, ob.target, ob.intersectionRatio, ob, loaded);

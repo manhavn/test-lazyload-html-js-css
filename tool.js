@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("ok");
+  console.log("DOMContentLoaded");
 });
 
 const iframeAppData = {};
