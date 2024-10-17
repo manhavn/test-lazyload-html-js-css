@@ -1,4 +1,4 @@
-(() => {
+(function () {
   const key = getKeyScript();
   let loaded;
 
@@ -23,3 +23,4 @@
     console.log(el, key);
   });
 })();
+document.currentScript.remove();

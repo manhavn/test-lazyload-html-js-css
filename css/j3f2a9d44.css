@@ -1,0 +1,9 @@
+[itd="j3f2a9d44"] {
+  overflow: hidden;
+}
+
+[itd="j3f2a9d44"] .drag-zone {
+  min-width: 200px;
+  min-height: 200px;
+  color: red;
+}

@@ -1,4 +1,4 @@
-(() => {
+(function () {
   const key = getKeyScript();
   let loaded;
 
@@ -11,22 +11,13 @@
       const computedStyles = getCustomCssProperties(ob.target);
       console.log(computedStyles);
 
-      const jsParentPath = "js/";
-      const cssParentPath = "css/";
-
       const allItem = document.querySelectorAll(
-        `div[${window[thisTime]}="${key}"] div[${window[thisTime]}]`,
+        `div[${window[wdtkt].attrItemId}="${key}"] div[${window[wdtkt].attrItemId}]`,
       );
       allItem.forEach((item) => {
-        const itemId = item.getAttribute(window[thisTime]);
-        if (item.hasAttribute("css")) {
-          loadStyleCss(`${cssParentPath}${itemId}.css`, item);
-          item.removeAttribute("css");
-        }
-        if (item.hasAttribute("js")) {
-          loadScript(`${jsParentPath}${itemId}.js`, item);
-          item.removeAttribute("js");
-        }
+        const attrItemId = item.getAttribute(window[wdtkt].attrItemId);
+        loadStyleCss(`${window[wdtkt].cssSrcFolder}${attrItemId}.css`, item);
+        loadScript(`${window[wdtkt].jsSrcFolder}${attrItemId}.js`, item);
       });
     }
   };
@@ -37,3 +28,4 @@
     console.log(el, key);
   });
 })();
+document.currentScript.remove();

@@ -1,50 +1,42 @@
-const thisTime = `t${new Date().getTime()}`;
-window[thisTime] = "itd";
-
-const cssPropertyGroup = [
-  "margin",
-  "padding",
-  "border",
-  "outline",
-  "background",
-  "font",
-  "text",
-  "list-style",
-  "flex",
-  "grid",
-  "animation",
-  "transition",
-  "overflow",
-  "position",
-  "transform",
-];
+const wdtkt = `${crypto.randomUUID().slice(0, 8)}${new Date().getTime()}`;
+window[wdtkt] = {
+  attrItemId: "itd",
+  jsSrcFolder: "js/",
+  cssSrcFolder: "css/",
+  listItems: {},
+};
 
 const loadScript = (url, item) => {
-  const script = document.createElement("script");
-  script.src = url;
-  script.type = "text/javascript";
-  script.onerror = () => {
-    item.remove();
-    script.remove();
-  };
-  document.head.appendChild(script);
+  if (item.hasAttribute("js")) {
+    const script = document.createElement("script");
+    script.src = url;
+    script.type = "text/javascript";
+    script.onerror = () => {
+      item.remove();
+      script.remove();
+    };
+    item.removeAttribute("js");
+    document.head.appendChild(script);
+  }
 };
 
 const loadStyleCss = (url, item) => {
-  const link = document.createElement("link");
-  link.href = url;
-  link.rel = "stylesheet";
-  link.onerror = () => {
-    item.remove();
-    link.remove();
-  };
-  document.head.appendChild(link);
+  if (item.hasAttribute("css")) {
+    const link = document.createElement("link");
+    link.href = url;
+    link.rel = "stylesheet";
+    link.onerror = () => {
+      item.remove();
+      link.remove();
+    };
+    item.removeAttribute("css");
+    document.head.appendChild(link);
+  }
 };
 
 const getRandomId = () => {
   return (
     "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
-    "-" +
     crypto.randomUUID().slice(0, 8)
   );
 };
@@ -54,7 +46,9 @@ const getKeyScript = () => {
 };
 
 const queryElements = (key) => {
-  return document.querySelectorAll(`[${window[thisTime]}="${key}"]`) || [];
+  return (
+    document.querySelectorAll(`[${window[wdtkt].attrItemId}="${key}"]`) || []
+  );
 };
 
 const getObsCallback = (callback) => {
@@ -91,17 +85,7 @@ const getCustomCssProperties = (element) => {
       computedStyles.getPropertyValue(property) !==
       defaultStyles.getPropertyValue(property)
     ) {
-      const matchPropertyGroup = cssPropertyGroup.filter((val) =>
-        property.startsWith(val),
-      );
-      if (matchPropertyGroup.length > 0) {
-        matchPropertyGroup.forEach((val) => {
-          filteredProperties[val] = computedStyles.getPropertyValue(val);
-        });
-      } else {
-        filteredProperties[property] =
-          computedStyles.getPropertyValue(property);
-      }
+      filteredProperties[property] = computedStyles.getPropertyValue(property);
     }
   }
   tempDiv.removeChild(temp);
@@ -111,25 +95,16 @@ const getCustomCssProperties = (element) => {
   return filteredProperties;
 };
 
-const listItems = {};
 document.addEventListener("DOMContentLoaded", () => {
-  const jsParentPath = "js/";
-  const cssParentPath = "css/";
-
-  const allItem = document.querySelectorAll(`body>div[${window[thisTime]}]`);
+  const allItem = document.querySelectorAll(
+    `body>div[${window[wdtkt].attrItemId}]`,
+  );
   allItem.forEach((item) => {
-    const itemId = item.getAttribute(window[thisTime]);
-    listItems[itemId] = item;
-    if (item.hasAttribute("css")) {
-      loadStyleCss(`${cssParentPath}${itemId}.css`, item);
-      item.removeAttribute("css");
-    }
-    if (item.hasAttribute("js")) {
-      loadScript(`${jsParentPath}${itemId}.js`, item);
-      item.removeAttribute("js");
-    }
+    const attrItemId = item.getAttribute(window[wdtkt].attrItemId);
+    window[wdtkt].listItems[attrItemId] = item;
+    loadStyleCss(`${window[wdtkt].cssSrcFolder}${attrItemId}.css`, item);
+    loadScript(`${window[wdtkt].jsSrcFolder}${attrItemId}.js`, item);
   });
-});
 
-console.log(getRandomId());
-console.log(listItems, document.styleSheets, thisTime, window[thisTime]);
+  console.log(getRandomId(), document.styleSheets, window[wdtkt]);
+});
