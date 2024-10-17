@@ -3,12 +3,8 @@
   const key = getKeyScript();
   let loaded;
 
-  const callback = (ob) => {
-    wd.obIntersecting[key] = ob;
-    if (!isTop) wd.listIntersecting[key] = ob.isIntersecting;
-
+  const actionCallback = (ob) => {
     console.log(ob.isIntersecting, ob.target, ob.intersectionRatio, ob, loaded);
-
     if (!loaded && ob.isIntersecting) {
       loaded = true;
 
@@ -25,10 +21,6 @@
       });
     }
   };
-
-  const observer = getObsElements(callback);
-  queryElements(key).forEach((el) => {
-    observer.observe(el);
-  });
+  startObs(actionCallback, key);
 })();
 document.currentScript.remove();

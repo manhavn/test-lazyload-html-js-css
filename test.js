@@ -48,7 +48,7 @@ const loadScript = (url, item) => {
       item.remove();
       script.remove();
     };
-    item.removeAttribute("js");
+    // item.removeAttribute("js");
     document.head.appendChild(script);
   }
 };
@@ -62,7 +62,7 @@ const loadStyleCss = (url, item) => {
       item.remove();
       link.remove();
     };
-    item.removeAttribute("css");
+    // item.removeAttribute("css");
     document.head.appendChild(link);
   }
 };
@@ -119,6 +119,20 @@ const getCustomCssProperties = (element) => {
   temp.remove();
   tempDiv.remove();
   return filteredProperties;
+};
+
+const startObs = (actionCallback, key, threshold) => {
+  const wd = window[wdtkt];
+  const callback = (ob) => {
+    wd.obIntersecting[key] = ob;
+    if (!isTop) wd.listIntersecting[key] = ob.isIntersecting;
+    if (actionCallback) actionCallback(ob);
+  };
+
+  const observer = getObsElements(callback, threshold);
+  queryElements(key).forEach((el) => {
+    observer.observe(el);
+  });
 };
 
 document.addEventListener("DOMContentLoaded", () => {

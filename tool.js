@@ -54,5 +54,5 @@ function run({ contentWindow, contentDocument }) {
   contentWindow.ondragover = parentAction;
   contentWindow.ondragstart = parentAction;
 
-  console.log(iframeAppData);
+  console.log(iframeAppData, contentWindow[contentWindow["dataId"]]);
 }
