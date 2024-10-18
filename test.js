@@ -16,13 +16,17 @@ if (!isTop) window["dataId"] = wdtkt;
   const listItems = {};
   const listIntersecting = {};
   const obIntersecting = {};
+  const styleSheets = {};
+  const childSource = {};
   const dataApp = {
     attrItemId,
     jsSrcFolder,
     cssSrcFolder,
+    styleSheets,
     listItems,
     listIntersecting,
     obIntersecting,
+    childSource,
   };
   window[wdtkt] = dataApp;
   setInterval(() => {
@@ -31,11 +35,13 @@ if (!isTop) window["dataId"] = wdtkt;
     if (dataApp.jsSrcFolder !== jsSrcFolder) dataApp.jsSrcFolder = jsSrcFolder;
     if (dataApp.cssSrcFolder !== cssSrcFolder)
       dataApp.cssSrcFolder = cssSrcFolder;
+    if (dataApp.styleSheets !== styleSheets) dataApp.styleSheets = styleSheets;
     if (dataApp.listItems !== listItems) dataApp.listItems = listItems;
     if (dataApp.listIntersecting !== listIntersecting)
       dataApp.listIntersecting = listIntersecting;
     if (dataApp.obIntersecting !== obIntersecting)
       dataApp.obIntersecting = obIntersecting;
+    if (dataApp.childSource !== childSource) dataApp.childSource = childSource;
   }, 1000);
 })();
 
@@ -48,7 +54,6 @@ const loadScript = (url, item) => {
       item.remove();
       script.remove();
     };
-    // item.removeAttribute("js");
     document.head.appendChild(script);
   }
 };
@@ -62,8 +67,8 @@ const loadStyleCss = (url, item) => {
       item.remove();
       link.remove();
     };
-    // item.removeAttribute("css");
     document.head.appendChild(link);
+    window[wdtkt].styleSheets[url] = link;
   }
 };
 
@@ -80,7 +85,7 @@ const queryElements = (key) => {
 const getObsCallback = (callback) => {
   return (ev) => {
     ev.forEach((ob) => {
-      if (callback) callback(ob);
+      callback(ob);
     });
   };
 };
@@ -126,12 +131,26 @@ const startObs = (actionCallback, key, threshold) => {
   const callback = (ob) => {
     wd.obIntersecting[key] = ob;
     if (!isTop) wd.listIntersecting[key] = ob.isIntersecting;
-    if (actionCallback) actionCallback(ob);
+    actionCallback(ob);
   };
 
   const observer = getObsElements(callback, threshold);
   queryElements(key).forEach((el) => {
     observer.observe(el);
+  });
+};
+
+const loadChildSource = (key) => {
+  const wd = window[wdtkt];
+  if (wd.childSource[key]) return;
+  wd.childSource[key] = true;
+  const allItem = document.querySelectorAll(
+    `div[${wd.attrItemId}="${key}"] div[${wd.attrItemId}]`,
+  );
+  allItem.forEach((item) => {
+    const attrItemId = item.getAttribute(wd.attrItemId);
+    loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item);
+    loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item);
   });
 };
 

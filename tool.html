@@ -2,10 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tool</title>
     <script src="tool.js"></script>
   </head>
   <body>
+    <button id="export">export</button>
     <div
       style="width: 80vw; height: 90vh; position: absolute; right: 0; bottom: 0"
     >
@@ -13,7 +15,7 @@
         id="app-iframe"
         style="border: unset"
         allowfullscreen="allowfullscreen"
-        onload="run(document.getElementById('app-iframe')||{})"
+        onload="run('app-iframe')"
         loading="lazy"
         width="100%"
         height="100%"
