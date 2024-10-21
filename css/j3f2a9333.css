@@ -1,9 +1,16 @@
 [itd="j3f2a9333"] {
-  overflow: hidden;
+  --j3f2a9333-width: 1024;
+  --j3f2a9333-height: 200;
 }
 
-[itd="j3f2a9333"] .item-zone {
-  min-width: 200px;
-  min-height: 200px;
-  color: orange;
+[itd="j3f2a9333"] {
+  zoom: calc(min(var(--window-inner-width) / var(--j3f2a9333-width), 1));
+  width: calc(var(--j3f2a9333-width) * 1px);
+  height: calc(var(--j3f2a9333-height) * 1px);
+  overflow: hidden;
+  position: relative;
+}
+
+[itd="j3f2a9333"] > * {
+  position: absolute;
 }

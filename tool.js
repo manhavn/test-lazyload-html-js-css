@@ -1,5 +1,12 @@
 const iframeAppData = {};
 
+const getRandomId = () => {
+  return (
+    "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
+    crypto.randomUUID().slice(0, 8)
+  );
+};
+
 function moveAction() {
   console.log("moveAction");
 }
@@ -65,15 +72,27 @@ function getDoctypeString(dc) {
 function cleanTextNode(val) {
   let newVal = "";
   let valData = val.data;
-  if (valData.indexOf("\n") === 0) {
-    valData = " " + valData.trimStart();
+  if (
+    valData.startsWith(" ") ||
+    valData.startsWith("\n") ||
+    valData.startsWith("\t")
+  ) {
+    newVal = " ";
   }
-  if (valData.lastIndexOf("\n") !== -1) {
-    valData = valData.trimEnd() + " ";
+  const valMatch = valData.match(/\S+/g);
+  if (valMatch) newVal += valMatch.join(" ");
+  if (
+    valData.endsWith(" ") ||
+    valData.endsWith("\n") ||
+    valData.endsWith("\t")
+  ) {
+    newVal += " ";
   }
-  valData.match(/(\s?)(\S+)(\s?)/g)?.forEach((data) => {
-    newVal += data;
-  });
+  if (newVal.trim() === "") {
+    newVal = "";
+  } else if (val.parentElement.tagName === "STYLE") {
+    newVal = newVal.trim();
+  }
   val.data = newVal;
 }
 
@@ -104,7 +123,12 @@ function cleanHtmlCode(el, skipCleanByTagName) {
 function exportHTML(callback) {
   const skipCleanByTagName = ["PRE", "XMP", "TEXTAREA"];
   return () => {
-    const docType = getDoctypeString(iframeAppData.contentDocument);
+    const contentDocument = iframeAppData.contentDocument;
+    const docType = getDoctypeString(contentDocument);
+    const cloneDoc = contentDocument.documentElement.cloneNode(true);
+    while (cloneDoc.querySelector("link")) {
+      cloneDoc.querySelector("link").remove();
+    }
     const exportIframe = document.createElement("iframe");
     exportIframe.style.border = "unset";
     exportIframe.style.position = "absolute";
@@ -112,18 +136,17 @@ function exportHTML(callback) {
     exportIframe.style.right = "0";
     exportIframe.width = "0";
     exportIframe.height = "0";
-    exportIframe.srcdoc =
-      iframeAppData.contentDocument.documentElement.outerHTML;
+    exportIframe.srcdoc = cloneDoc.outerHTML;
     document.body.appendChild(exportIframe);
     exportIframe.onload = () => {
-      const contentDocument = exportIframe.contentDocument;
-      do {
-        for (let i = 0; i < contentDocument.styleSheets.length; i++) {
-          contentDocument.styleSheets.item(i).ownerNode.remove();
-        }
-      } while (contentDocument.styleSheets.length > 0);
-      cleanHtmlCode(contentDocument.documentElement, skipCleanByTagName);
-      callback(docType + contentDocument.documentElement.outerHTML);
+      const documentElement = exportIframe.contentDocument.documentElement;
+      documentElement.setAttribute("version", getRandomId());
+      documentElement.removeAttribute("style");
+      while (documentElement.querySelector("link")) {
+        documentElement.querySelector("link").remove();
+      }
+      cleanHtmlCode(documentElement, skipCleanByTagName);
+      callback(docType + documentElement.outerHTML);
       document.body.removeChild(exportIframe);
       exportIframe.remove();
     };

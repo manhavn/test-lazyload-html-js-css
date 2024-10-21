@@ -6,7 +6,7 @@ const getRandomId = () => {
 };
 
 const wdtkt = `${getRandomId()}`;
-const isTop = window === window.top;
+const isTop = window === top;
 if (!isTop) window["dataId"] = wdtkt;
 
 (() => {
@@ -47,8 +47,9 @@ if (!isTop) window["dataId"] = wdtkt;
 
 const loadScript = (url, item) => {
   if (item.hasAttribute("js")) {
+    const htmlVersion = document.documentElement.getAttribute("version") || "";
     const script = document.createElement("script");
-    script.src = url;
+    script.src = `${url}?${htmlVersion}`;
     script.type = "text/javascript";
     script.onerror = () => {
       item.remove();
@@ -59,12 +60,13 @@ const loadScript = (url, item) => {
 };
 
 const loadStyleCss = (url, item) => {
-  if (item.hasAttribute("css")) {
+  if (!item || item.hasAttribute("css")) {
+    const htmlVersion = document.documentElement.getAttribute("version") || "";
     const link = document.createElement("link");
-    link.href = url;
+    link.href = `${url}?${htmlVersion}`;
     link.rel = "stylesheet";
     link.onerror = () => {
-      item.remove();
+      if (item) item.remove();
       link.remove();
     };
     document.head.appendChild(link);
@@ -73,7 +75,14 @@ const loadStyleCss = (url, item) => {
 };
 
 const getKeyScript = () => {
-  return document.currentScript.src.split("/").pop().replace(/\.js$/, "");
+  return document.currentScript.src
+    .split("/")
+    .pop()
+    .split("?")
+    .shift()
+    .split("#")
+    .shift()
+    .replace(/\.js$/, "");
 };
 
 const queryElements = (key) => {
@@ -145,7 +154,7 @@ const loadChildSource = (key) => {
   if (wd.childSource[key]) return;
   wd.childSource[key] = true;
   const allItem = document.querySelectorAll(
-    `div[${wd.attrItemId}="${key}"] div[${wd.attrItemId}]`,
+    `[${wd.attrItemId}="${key}"] [${wd.attrItemId}]`,
   );
   allItem.forEach((item) => {
     const attrItemId = item.getAttribute(wd.attrItemId);
@@ -154,9 +163,19 @@ const loadChildSource = (key) => {
   });
 };
 
+const setWindowResize = () => {
+  const htmlStyle = document.documentElement.style;
+  htmlStyle.setProperty("--window-inner-width", `${innerWidth}`);
+};
+addEventListener("resize", setWindowResize);
+
+const key = getKeyScript();
 document.addEventListener("DOMContentLoaded", () => {
+  if (window !== top && innerWidth === 0) return;
+  setWindowResize();
   const wd = window[wdtkt];
-  const allItem = document.querySelectorAll(`body>div[${wd.attrItemId}]`);
+  loadStyleCss(`${wd.cssSrcFolder}${key}.css`, null);
+  const allItem = document.querySelectorAll(`body>[${wd.attrItemId}]`);
   allItem.forEach((item) => {
     const attrItemId = item.getAttribute(wd.attrItemId);
     loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item);
