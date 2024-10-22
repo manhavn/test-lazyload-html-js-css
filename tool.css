@@ -1,3 +1,20 @@
+.list-item {
+  display: flex;
+  max-width: 200px;
+}
+
+.list-item .item {
+  flex: 1;
+  width: 100px;
+  height: 100px;
+  margin: 2px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0900;
+}
+
 *::-ms-scrollbar {
   width: 0px;
   height: 0px;

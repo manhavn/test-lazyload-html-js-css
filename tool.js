@@ -34,6 +34,8 @@ function run(elementId) {
   iframeAppData.appIframe = appIframe;
   iframeAppData.contentWindow = contentWindow;
   iframeAppData.contentDocument = contentDocument;
+  const dataId = contentWindow["dataId"];
+  if (dataId) iframeAppData.dataIframe = contentWindow[dataId];
 
   contentWindow.onmousedown = parentAction;
   contentWindow.onmouseup = parentAction;
@@ -153,6 +155,38 @@ function exportHTML(callback) {
   };
 }
 
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+  ev.dataTransfer.setData("data", ev.target.id);
+}
+
+function drop(ev) {
+  ev.preventDefault();
+  const data = ev.dataTransfer.getData("data");
+  const section = document.createElement("section");
+  const itd = getRandomId();
+  section.setAttribute("itd", itd);
+  const jsBlobData = new Blob([], { type: "application/javascript" });
+  section.setAttribute("js", URL.createObjectURL(jsBlobData));
+  const cssBlobData = new Blob([], { type: "text/css" });
+  section.setAttribute("css", URL.createObjectURL(cssBlobData));
+  section.setAttribute("data", data);
+  // ev.target.appendChild(section);
+  iframeAppData.contentDocument.body.appendChild(section);
+  const wd = iframeAppData.dataIframe;
+  wd.loadStyleCss("", section);
+  wd.loadScript("", section);
+}
+
+const itemMouseDown = (e) => {
+  e.target.ondragstart = drag;
+  iframeAppData.contentDocument.body.ondrop = drop;
+  iframeAppData.contentDocument.body.ondragover = allowDrop;
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log(iframeAppData);
 
@@ -161,4 +195,9 @@ document.addEventListener("DOMContentLoaded", () => {
     iframeAppData.appIframe.srcdoc = html;
   };
   document.getElementById("export").onclick = exportHTML(callback);
+
+  const listItem = document.getElementById("list-item");
+  for (let i = 0; i < listItem.children.length; i++) {
+    listItem.children[i].addEventListener("mousedown", itemMouseDown);
+  }
 });
