@@ -206,38 +206,40 @@ document.addEventListener("DOMContentLoaded", () => {
       item.setAttribute("old-id", oldId);
       attrItemId = getRandomId();
       item.setAttribute(wd.attrItemId, attrItemId);
-
-      const responseCss = await fetch(
-        `${wd.cssSrcFolder}${oldId}.css?${attrItemId}${htmlVersion}`,
-      );
-      if (responseCss.ok) {
-        const data = await responseCss.text();
-        const cssBlobData = new Blob(
-          [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
-          { type: "text/css" },
+      if (item.hasAttribute("css")) {
+        const responseCss = await fetch(
+          `${wd.cssSrcFolder}${oldId}.css?${attrItemId}${htmlVersion}`,
         );
-        const cssUrl = URL.createObjectURL(cssBlobData);
-        item.setAttribute("css", cssUrl);
-      } else {
-        const cssBlobData = new Blob([], { type: "text/css" });
-        item.setAttribute("css", URL.createObjectURL(cssBlobData));
+        if (responseCss.ok) {
+          const data = await responseCss.text();
+          const cssBlobData = new Blob(
+            [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
+            { type: "text/css" },
+          );
+          const cssUrl = URL.createObjectURL(cssBlobData);
+          item.setAttribute("css", cssUrl);
+        } else {
+          const cssBlobData = new Blob([], { type: "text/css" });
+          item.setAttribute("css", URL.createObjectURL(cssBlobData));
+        }
       }
-
-      const responseJs = await fetch(
-        `${wd.jsSrcFolder}${oldId}.js?${attrItemId}${htmlVersion}`,
-      );
-      if (responseJs.ok) {
-        const data = await responseJs.text();
-        const jsBlobData = new Blob(
-          [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
-          { type: "application/javascript" },
+      if (item.hasAttribute("js")) {
+        const responseJs = await fetch(
+          `${wd.jsSrcFolder}${oldId}.js?${attrItemId}${htmlVersion}`,
         );
-        const jsUrl = URL.createObjectURL(jsBlobData);
-        window[wdtkt][jsUrl] = attrItemId;
-        item.setAttribute("js", jsUrl);
-      } else {
-        const jsBlobData = new Blob([], { type: "application/javascript" });
-        item.setAttribute("js", URL.createObjectURL(jsBlobData));
+        if (responseJs.ok) {
+          const data = await responseJs.text();
+          const jsBlobData = new Blob(
+            [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
+            { type: "application/javascript" },
+          );
+          const jsUrl = URL.createObjectURL(jsBlobData);
+          window[wdtkt][jsUrl] = attrItemId;
+          item.setAttribute("js", jsUrl);
+        } else {
+          const jsBlobData = new Blob([], { type: "application/javascript" });
+          item.setAttribute("js", URL.createObjectURL(jsBlobData));
+        }
       }
     }
     mapCheckExists[attrItemId] = true;

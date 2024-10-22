@@ -102,6 +102,12 @@ function cleanHtmlCode(el, skipCleanByTagName) {
   let commentParentNode;
   el.childNodes.forEach((val) => {
     if (val.nodeType === 1) {
+      if (val.getAttribute("js")) {
+        val.setAttribute("js", "");
+      }
+      if (val.getAttribute("css")) {
+        val.setAttribute("css", "");
+      }
       if (!skipCleanByTagName.includes(val.tagName)) {
         cleanHtmlCode(val, skipCleanByTagName);
       }
@@ -168,15 +174,22 @@ function drop(ev) {
   const wd = iframeAppData.dataIframe;
   const data = ev.dataTransfer.getData("data");
   const section = document.createElement("section");
-  const itd = getRandomId();
-  section.setAttribute("itd", itd);
+  const randomId = getRandomId();
+  section.setAttribute(wd.attrItemId, randomId);
 
-  const jsBlobData = new Blob([], { type: "application/javascript" });
+  const jsBlobData = new Blob(
+    [`console.log("${wd.attrItemId}: ${randomId}")`],
+    {
+      type: "application/javascript",
+    },
+  );
   const jsUrl = URL.createObjectURL(jsBlobData);
-  wd[jsUrl] = itd;
+  wd[jsUrl] = randomId;
   section.setAttribute("js", jsUrl);
 
-  const cssBlobData = new Blob([], { type: "text/css" });
+  const cssBlobData = new Blob([`[${wd.attrItemId}="${randomId}"]{}`], {
+    type: "text/css",
+  });
   section.setAttribute("css", URL.createObjectURL(cssBlobData));
   section.setAttribute("data", data);
 
@@ -186,6 +199,19 @@ function drop(ev) {
   wd.loadStyleCss("", section);
   wd.loadScript("", section);
 }
+
+const reloadEventListenerItem = (item, jsUrl) => {
+  const wd = iframeAppData.dataIframe;
+  if (!item) return;
+  const cloneItem = item.cloneNode(true);
+  item.after(cloneItem);
+  if (jsUrl) wd.loadScript(jsUrl, cloneItem);
+  if (item.nextElementSibling === cloneItem && cloneItem.isConnected) {
+    item.remove();
+  } else {
+    cloneItem.remove();
+  }
+};
 
 const itemMouseDown = (e) => {
   e.target.ondragstart = drag;
