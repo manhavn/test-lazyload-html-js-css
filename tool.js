@@ -165,18 +165,24 @@ function drag(ev) {
 
 function drop(ev) {
   ev.preventDefault();
+  const wd = iframeAppData.dataIframe;
   const data = ev.dataTransfer.getData("data");
   const section = document.createElement("section");
   const itd = getRandomId();
   section.setAttribute("itd", itd);
+
   const jsBlobData = new Blob([], { type: "application/javascript" });
-  section.setAttribute("js", URL.createObjectURL(jsBlobData));
+  const jsUrl = URL.createObjectURL(jsBlobData);
+  wd[jsUrl] = itd;
+  section.setAttribute("js", jsUrl);
+
   const cssBlobData = new Blob([], { type: "text/css" });
   section.setAttribute("css", URL.createObjectURL(cssBlobData));
   section.setAttribute("data", data);
+
   // ev.target.appendChild(section);
   iframeAppData.contentDocument.body.appendChild(section);
-  const wd = iframeAppData.dataIframe;
+
   wd.loadStyleCss("", section);
   wd.loadScript("", section);
 }

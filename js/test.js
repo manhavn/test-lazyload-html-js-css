@@ -90,14 +90,18 @@ const loadStyleCss = (url, item) => {
 };
 
 const getKeyScript = () => {
-  return document.currentScript.src
-    .split("/")
-    .pop()
-    .split("?")
-    .shift()
-    .split("#")
-    .shift()
-    .replace(/\.js$/, "");
+  const src = document.currentScript.src;
+  return (
+    window[wdtkt]?.[src] ||
+    src
+      .split("/")
+      .pop()
+      .split("?")
+      .shift()
+      .split("#")
+      .shift()
+      .replace(/\.js$/, "")
+  );
 };
 
 const queryElements = (key) => {
@@ -212,7 +216,8 @@ document.addEventListener("DOMContentLoaded", () => {
           [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
           { type: "text/css" },
         );
-        item.setAttribute("css", URL.createObjectURL(cssBlobData));
+        const cssUrl = URL.createObjectURL(cssBlobData);
+        item.setAttribute("css", cssUrl);
       } else {
         const cssBlobData = new Blob([], { type: "text/css" });
         item.setAttribute("css", URL.createObjectURL(cssBlobData));
@@ -227,7 +232,9 @@ document.addEventListener("DOMContentLoaded", () => {
           [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
           { type: "application/javascript" },
         );
-        item.setAttribute("js", URL.createObjectURL(jsBlobData));
+        const jsUrl = URL.createObjectURL(jsBlobData);
+        window[wdtkt][jsUrl] = attrItemId;
+        item.setAttribute("js", jsUrl);
       } else {
         const jsBlobData = new Blob([], { type: "application/javascript" });
         item.setAttribute("js", URL.createObjectURL(jsBlobData));
