@@ -1,3 +1,8 @@
+.menu-item {
+  overflow-y: scroll;
+  height: 80vh;
+}
+
 .list-item {
   display: flex;
   max-width: 200px;

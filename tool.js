@@ -40,6 +40,10 @@ function run(elementId) {
 
   const styleSheet0 = contentDocument.styleSheets[0];
   styleSheet0.insertRule(
+    `body { min-width: 90vw; min-height: 90vh; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
     `body [data-type="section"] { min-height: 15px; }`,
     styleSheet0.cssRules.length,
   );
@@ -264,6 +268,29 @@ const getParentElementByAttribute = (el, attr, value) => {
   }
 };
 
+async function requestAsync(url) {
+  const response = await fetch(url);
+  return response.ok ? await response.text() : "";
+}
+
+async function getDataFromItem(urlGet, dataType, dataId) {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = await requestAsync(
+    `${urlGet}/${dataType}/${dataId}.html`,
+  );
+  const html = tempDiv.firstElementChild;
+  const result = { html };
+  if (html && html.hasAttribute("js")) {
+    const js = await requestAsync(`${urlGet}/${dataType}/${dataId}.js`);
+    if (js) result.js = js;
+  }
+  if (html && html.hasAttribute("css")) {
+    const css = await requestAsync(`${urlGet}/${dataType}/${dataId}.css`);
+    if (css) result.css = css;
+  }
+  return result;
+}
+
 function drop(ev) {
   ev.preventDefault();
   const dataTransfer = ev.dataTransfer;
@@ -286,28 +313,43 @@ function drop(ev) {
     if (dropElement) dropElement.appendChild(newElement);
   }
 
-  const randomId = getRandomId();
-  newElement.setAttribute(wd.attrItemId, randomId);
+  const urlGetDataItem = "drag";
+  getDataFromItem(urlGetDataItem, dataType, dataId).then((r) => {
+    if (r.html) {
+      for (let i = 0; i < r.html.attributes.length; i++) {
+        const item = r.html.attributes[i];
+        newElement.setAttribute(item.name, item.value);
+      }
+      if (r.html.firstElementChild) {
+        newElement.appendChild(r.html.firstElementChild);
+      }
+    }
 
-  const jsBlobData = new Blob(
-    [`console.log("${wd.attrItemId}: ${randomId}")`],
-    {
-      type: "application/javascript",
-    },
-  );
-  const jsUrl = URL.createObjectURL(jsBlobData);
-  wd[jsUrl] = randomId;
-  newElement.setAttribute("js", jsUrl);
+    const randomId = getRandomId();
+    newElement.setAttribute(wd.attrItemId, randomId);
 
-  const cssBlobData = new Blob([`[${wd.attrItemId}="${randomId}"]{}`], {
-    type: "text/css",
+    if (newElement.hasAttribute("js")) {
+      const js = r.js ? r.js.replace(new RegExp(dataId, "g"), randomId) : "";
+      const jsBlobData = new Blob([js], {
+        type: "application/javascript",
+      });
+      const jsUrl = URL.createObjectURL(jsBlobData);
+      wd[jsUrl] = randomId;
+      newElement.setAttribute("js", jsUrl);
+    }
+
+    if (newElement.hasAttribute("css")) {
+      const css = r.css ? r.css.replace(new RegExp(dataId, "g"), randomId) : "";
+      const cssBlobData = new Blob([css], {
+        type: "text/css",
+      });
+      newElement.setAttribute("css", URL.createObjectURL(cssBlobData));
+      newElement.setAttribute("data-type", dataType);
+    }
+
+    wd.loadStyleCss("", newElement);
+    wd.loadScript("", newElement);
   });
-  newElement.setAttribute("css", URL.createObjectURL(cssBlobData));
-  newElement.setAttribute("data-id", dataId);
-  newElement.setAttribute("data-type", dataType);
-
-  wd.loadStyleCss("", newElement);
-  wd.loadScript("", newElement);
 }
 
 const reloadEventListenerItem = (item, jsUrl) => {

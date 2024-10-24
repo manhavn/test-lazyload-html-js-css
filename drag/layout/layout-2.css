@@ -1,0 +1,16 @@
+[itd="layout-2"] {
+  --layout-2-width: 1024;
+  --layout-2-height: 200;
+}
+
+[itd="layout-2"] {
+  zoom: calc(min(var(--window-inner-width) / var(--layout-2-width), 1));
+  width: calc(var(--layout-2-width) * 1px);
+  height: calc(var(--layout-2-height) * 1px);
+  overflow: hidden;
+  position: relative;
+}
+
+[itd="layout-2"] > * {
+  position: absolute;
+}

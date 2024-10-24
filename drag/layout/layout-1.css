@@ -1,0 +1,16 @@
+[itd="layout-1"] {
+  --layout-1-width: 1024;
+  --layout-1-height: 200;
+}
+
+[itd="layout-1"] > [widget] {
+  zoom: calc(min(var(--window-inner-width) / var(--layout-1-width), 1));
+  width: calc(var(--layout-1-width) * 1px);
+  height: calc(var(--layout-1-height) * 1px);
+  overflow: hidden;
+  position: relative;
+}
+
+[itd="layout-1"] > [widget] > * {
+  position: absolute;
+}

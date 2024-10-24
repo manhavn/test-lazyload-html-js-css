@@ -1,0 +1,8 @@
+[itd="section-2"] {
+  background-color: #2ecc7100;
+}
+
+[itd="section-2"] > [layout] {
+  width: 100%;
+  min-height: inherit;
+}
