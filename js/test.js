@@ -18,12 +18,16 @@ if (isTop) document.currentScript.remove();
   const listIntersecting = {};
   const obIntersecting = {};
   const styleSheets = {};
+  const scriptContents = {};
+  const styleContents = {};
   const childSource = {};
   const dataApp = {
     attrItemId,
     jsSrcFolder,
     cssSrcFolder,
     styleSheets,
+    scriptContents,
+    styleContents,
     listItems,
     listIntersecting,
     obIntersecting,
@@ -37,6 +41,10 @@ if (isTop) document.currentScript.remove();
     if (dataApp.cssSrcFolder !== cssSrcFolder)
       dataApp.cssSrcFolder = cssSrcFolder;
     if (dataApp.styleSheets !== styleSheets) dataApp.styleSheets = styleSheets;
+    if (dataApp.scriptContents !== scriptContents)
+      dataApp.scriptContents = scriptContents;
+    if (dataApp.styleContents !== styleContents)
+      dataApp.styleContents = styleContents;
     if (dataApp.listItems !== listItems) dataApp.listItems = listItems;
     if (dataApp.listIntersecting !== listIntersecting)
       dataApp.listIntersecting = listIntersecting;
@@ -46,7 +54,7 @@ if (isTop) document.currentScript.remove();
   }, 1000);
 })();
 
-const loadScript = (url, item) => {
+const loadScript = (url, item, attrItemId) => {
   if (item.hasAttribute("js")) {
     const htmlVersion = document.documentElement.getAttribute("version") || "";
     const script = document.createElement("script");
@@ -58,6 +66,15 @@ const loadScript = (url, item) => {
       script.remove();
     };
     script.onload = () => {
+      if (!isTop && attrItemId) {
+        fetch(href)
+          .then((r) => {
+            return r.text();
+          })
+          .then((text) => {
+            window[wdtkt].scriptContents[attrItemId] = text;
+          });
+      }
       URL.revokeObjectURL(href);
       script.remove();
     };
@@ -65,7 +82,7 @@ const loadScript = (url, item) => {
   }
 };
 
-const loadStyleCss = (url, item) => {
+const loadStyleCss = (url, item, attrItemId) => {
   if (!item || item.hasAttribute("css")) {
     const htmlVersion = document.documentElement.getAttribute("version") || "";
     const link = document.createElement("link");
@@ -77,6 +94,15 @@ const loadStyleCss = (url, item) => {
       link.remove();
     };
     link.onload = () => {
+      if (!isTop && attrItemId) {
+        fetch(href)
+          .then((r) => {
+            return r.text();
+          })
+          .then((text) => {
+            window[wdtkt].styleContents[attrItemId] = text;
+          });
+      }
       URL.revokeObjectURL(href);
       for (let i = 0; i < document.styleSheets.length; i++) {
         const styleSheet = document.styleSheets.item(i);
@@ -178,8 +204,8 @@ const loadChildSource = (key) => {
   );
   allItem.forEach((item) => {
     const attrItemId = item.getAttribute(wd.attrItemId);
-    loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item);
-    loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item);
+    loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item, attrItemId);
+    loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item, attrItemId);
   });
 };
 
@@ -196,7 +222,7 @@ const contentLoaded = () => {
   const wd = window[wdtkt];
   wd.loadStyleCss = loadStyleCss;
   wd.loadScript = loadScript;
-  loadStyleCss(`${wd.cssSrcFolder}${key}.css`, null);
+  loadStyleCss(`${wd.cssSrcFolder}${key}.css`);
   const mapCheckExists = {};
   const htmlVersion = document.documentElement.getAttribute("version") || "";
   const allItem = document.querySelectorAll(`body>[${wd.attrItemId}]`);
@@ -244,8 +270,8 @@ const contentLoaded = () => {
       }
     }
     mapCheckExists[attrItemId] = true;
-    loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item);
-    loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item);
+    loadStyleCss(`${wd.cssSrcFolder}${attrItemId}.css`, item, attrItemId);
+    loadScript(`${wd.jsSrcFolder}${attrItemId}.js`, item, attrItemId);
     wd.listItems[attrItemId] = item;
   });
   // console.log(document.styleSheets, wd);
