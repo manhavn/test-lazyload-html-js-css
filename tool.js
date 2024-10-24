@@ -51,6 +51,18 @@ function run(elementId) {
     `[drop-zone-${iframeAppData.dataId}] { outline: 1px solid #0909 !important; }`,
     styleSheet0.cssRules.length,
   );
+  styleSheet0.insertRule(
+    `[drag="section"] body { background-color: #0901 !important; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `[drag="layout"] [layout] { background-color: #0901 !important; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `[drag="widget"] [widget] { background-color: #0901 !important; }`,
+    styleSheet0.cssRules.length,
+  );
 
   contentWindow.onmousedown = parentAction;
   contentWindow.onmouseup = parentAction;
@@ -226,10 +238,12 @@ function dragstart(ev) {
   wd.dataType = dataType;
   dataTransfer.setData("data-id", target.id);
   dataTransfer.setData("data-type", dataType);
+  iframeAppData.contentDocument.documentElement.setAttribute("drag", dataType);
 }
 
 function dragend(ev) {
   ev.preventDefault();
+  iframeAppData.contentDocument.documentElement.removeAttribute("drag");
   const wd = iframeAppData.dataIframe;
   const allowDrop = iframeAppData.allowDrop;
   if (allowDrop && wd.dataType) {
