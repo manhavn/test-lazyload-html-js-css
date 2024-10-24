@@ -5,43 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Title</title>
     <script src="js/test.js"></script>
+    <style>
+      body {
+        visibility: hidden;
+        animation-name: fadeInOpacity;
+        animation-delay: 0.5s;
+        animation-duration: 0.5s;
+      }
+
+      @keyframes fadeInOpacity {
+        0% {
+          opacity: 0;
+        }
+      }
+    </style>
+    <script>
+      setTimeout(() => {
+        (document.styleSheets?.[0]?.cssRules?.[0]?.style || {}).visibility = "";
+      }, 500);
+      if (window === top) document.currentScript.remove();
+    </script>
   </head>
   <body>
-    <section itd="j3f2a9d44" js css></section>
-    <section itd="j3f2a9d44" js css></section>
+    <div itd="j3f2a9d44" data-type="section" js css>
+      <div layout></div>
+    </div>
 
-    <section itd="j3f2a9dd5" js css>
-      <div class="drag-zone">
+    <div itd="j3f2a9d44" data-type="section" js css>
+      <div layout></div>
+    </div>
+
+    <div itd="j3f2a9dd5" data-type="section" js css>
+      <div class="drag-zone" layout>
         b
         <div itd="j3f2a9335" js css>
           <div class="item-zone">Child Item</div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section itd="j3f2a9dd6" js css>
+    <div itd="j3f2a9dd6" data-type="section" js css>
       <div class="drag-zone">
         b
         <div itd="j3f2a9334" js css>
           <div class="item-zone">Child Item</div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section itd="j3f2a9ddd" js css>
+    <div itd="j3f2a9ddd" data-type="section" js css>
       <!-- test comment -->
-      <div class="drag-zone">
+      <div class="drag-zone" layout widget>
         <!-- test comment -->
         b
         <!-- test comment -->
         <div itd="j3f2a9333" js css>
-          <div class="item-zone">Child Item<!-- test comment --></div>
+          <div class="item-zone" widget>Child Item<!-- test comment --></div>
         </div>
         <!-- test comment -->
       </div>
       <!-- test comment -->
       <!-- test comment -->
       <!-- test comment -->
-    </section>
+    </div>
   </body>
 </html>

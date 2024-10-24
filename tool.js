@@ -36,6 +36,17 @@ function run(elementId) {
   iframeAppData.contentDocument = contentDocument;
   const dataId = contentWindow["dataId"];
   if (dataId) iframeAppData.dataIframe = contentWindow[dataId];
+  iframeAppData.dataId = dataId;
+
+  const styleSheet0 = contentDocument.styleSheets[0];
+  styleSheet0.insertRule(
+    `body [data-type="section"] { min-height: 15px; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `[drop-zone-${iframeAppData.dataId}] { outline: 1px solid #0903 !important; }`,
+    styleSheet0.cssRules.length,
+  );
 
   contentWindow.onmousedown = parentAction;
   contentWindow.onmouseup = parentAction;
@@ -61,6 +72,8 @@ function run(elementId) {
   contentWindow.ondrop = parentAction;
   contentWindow.ondragover = parentAction;
   contentWindow.ondragstart = parentAction;
+
+  URL.revokeObjectURL(appIframe.src);
 }
 
 function getDoctypeString(dc) {
@@ -99,19 +112,21 @@ function cleanTextNode(val) {
 }
 
 function cleanHtmlCode(el, skipCleanByTagName) {
+  for (let i = 0; i < el.children.length; i++) {
+    const val = el.children[i];
+    if (val.getAttribute("js")) {
+      val.setAttribute("js", "");
+    }
+    if (val.getAttribute("css")) {
+      val.setAttribute("css", "");
+    }
+    if (!skipCleanByTagName.includes(val.tagName)) {
+      cleanHtmlCode(val, skipCleanByTagName);
+    }
+  }
   let commentParentNode;
   el.childNodes.forEach((val) => {
-    if (val.nodeType === 1) {
-      if (val.getAttribute("js")) {
-        val.setAttribute("js", "");
-      }
-      if (val.getAttribute("css")) {
-        val.setAttribute("css", "");
-      }
-      if (!skipCleanByTagName.includes(val.tagName)) {
-        cleanHtmlCode(val, skipCleanByTagName);
-      }
-    } else if (val.nodeType === 3) {
+    if (val.nodeType === 3) {
       cleanTextNode(val);
     } else if (val.nodeType === 8) {
       el.removeChild(val);
@@ -163,19 +178,79 @@ function exportHTML(callback) {
 
 function allowDrop(ev) {
   ev.preventDefault();
+  const target = ev.target;
+  const allowDrop = iframeAppData.allowDrop;
+  if (allowDrop !== target) {
+    iframeAppData.allowDrop = target;
+    const wd = iframeAppData.dataIframe;
+    if (!wd.dataType) return;
+    const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+    if (allowDrop) {
+      const parentRemoveDrop = getParentElementByAttribute(
+        allowDrop,
+        wd.dataType,
+      );
+      parentRemoveDrop?.removeAttribute(dropZoneId);
+    }
+    const parentAllowDrop = getParentElementByAttribute(target, wd.dataType);
+    parentAllowDrop?.setAttribute(dropZoneId, "");
+  }
 }
 
-function drag(ev) {
-  ev.dataTransfer.setData("data", ev.target.id);
+function dragstart(ev) {
+  const { target, dataTransfer } = ev;
+  const dataType = target.getAttribute("data-type");
+  const wd = iframeAppData.dataIframe;
+  wd.dataType = dataType;
+  dataTransfer.setData("data-id", target.id);
+  dataTransfer.setData("data-type", dataType);
 }
+
+function dragend(ev) {
+  ev.preventDefault();
+  const wd = iframeAppData.dataIframe;
+  const allowDrop = iframeAppData.allowDrop;
+  if (allowDrop) {
+    const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+    const parentRemoveDrop = getParentElementByAttribute(
+      allowDrop,
+      wd.dataType,
+    );
+    parentRemoveDrop?.removeAttribute(dropZoneId);
+  }
+  ev.dataTransfer.clearData();
+  delete wd.dataType;
+}
+
+const getParentElementByAttribute = (el, attr) => {
+  if (el) {
+    if (el.hasAttribute(attr)) {
+      return el;
+    } else {
+      return getParentElementByAttribute(el.parentElement, attr);
+    }
+  } else {
+    return null;
+  }
+};
 
 function drop(ev) {
   ev.preventDefault();
+  const dataTransfer = ev.dataTransfer;
+
   const wd = iframeAppData.dataIframe;
-  const data = ev.dataTransfer.getData("data");
-  const section = document.createElement("section");
+  const dataId = dataTransfer.getData("data-id");
+  const dataType = dataTransfer.getData("data-type");
+  const newElement = document.createElement("div");
+  if (dataType === "section") {
+    iframeAppData.contentDocument.body.appendChild(newElement);
+  } else {
+    const dropElement = getParentElementByAttribute(ev.target, dataType);
+    if (dropElement) dropElement.appendChild(newElement);
+  }
+
   const randomId = getRandomId();
-  section.setAttribute(wd.attrItemId, randomId);
+  newElement.setAttribute(wd.attrItemId, randomId);
 
   const jsBlobData = new Blob(
     [`console.log("${wd.attrItemId}: ${randomId}")`],
@@ -185,19 +260,17 @@ function drop(ev) {
   );
   const jsUrl = URL.createObjectURL(jsBlobData);
   wd[jsUrl] = randomId;
-  section.setAttribute("js", jsUrl);
+  newElement.setAttribute("js", jsUrl);
 
   const cssBlobData = new Blob([`[${wd.attrItemId}="${randomId}"]{}`], {
     type: "text/css",
   });
-  section.setAttribute("css", URL.createObjectURL(cssBlobData));
-  section.setAttribute("data", data);
+  newElement.setAttribute("css", URL.createObjectURL(cssBlobData));
+  newElement.setAttribute("data-id", dataId);
+  newElement.setAttribute("data-type", dataType);
 
-  // ev.target.appendChild(section);
-  iframeAppData.contentDocument.body.appendChild(section);
-
-  wd.loadStyleCss("", section);
-  wd.loadScript("", section);
+  wd.loadStyleCss("", newElement);
+  wd.loadScript("", newElement);
 }
 
 const reloadEventListenerItem = (item, jsUrl) => {
@@ -213,10 +286,13 @@ const reloadEventListenerItem = (item, jsUrl) => {
   }
 };
 
-const itemMouseDown = (e) => {
-  e.target.ondragstart = drag;
-  iframeAppData.contentDocument.body.ondrop = drop;
-  iframeAppData.contentDocument.body.ondragover = allowDrop;
+const itemMouseDown = (ev) => {
+  const target = ev.target;
+  target.ondragstart = dragstart;
+  target.ondragend = dragend;
+  const body = iframeAppData.contentDocument.body;
+  body.ondrop = drop;
+  body.ondragover = allowDrop;
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -224,12 +300,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const callback = (html) => {
     console.log(html);
+
     iframeAppData.appIframe.srcdoc = html;
   };
   document.getElementById("export").onclick = exportHTML(callback);
 
-  const listItem = document.getElementById("list-item");
-  for (let i = 0; i < listItem.children.length; i++) {
-    listItem.children[i].addEventListener("mousedown", itemMouseDown);
+  const listSection = document.getElementById("list-section");
+  for (let i = 0; i < listSection.children.length; i++) {
+    listSection.children[i].addEventListener("mousedown", itemMouseDown);
+  }
+  const listLayout = document.getElementById("list-layout");
+  for (let i = 0; i < listLayout.children.length; i++) {
+    listLayout.children[i].addEventListener("mousedown", itemMouseDown);
+  }
+  const listWidget = document.getElementById("list-widget");
+  for (let i = 0; i < listWidget.children.length; i++) {
+    listWidget.children[i].addEventListener("mousedown", itemMouseDown);
   }
 });

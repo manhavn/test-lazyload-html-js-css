@@ -8,6 +8,7 @@ const getRandomId = () => {
 const wdtkt = `${getRandomId()}`;
 const isTop = window === top;
 if (!isTop) window["dataId"] = wdtkt;
+if (isTop) document.currentScript.remove();
 
 (() => {
   const attrItemId = "itd";
@@ -53,7 +54,7 @@ const loadScript = (url, item) => {
     script.src = href;
     script.type = "text/javascript";
     script.onerror = () => {
-      item.remove();
+      if (isTop) item.remove();
       script.remove();
     };
     script.onload = () => {
@@ -72,14 +73,14 @@ const loadStyleCss = (url, item) => {
     link.href = href;
     link.rel = "stylesheet";
     link.onerror = () => {
-      if (item) item.remove();
+      if (isTop && item) item.remove();
       link.remove();
     };
     link.onload = () => {
       URL.revokeObjectURL(href);
       for (let i = 0; i < document.styleSheets.length; i++) {
         const styleSheet = document.styleSheets.item(i);
-        if (styleSheet.href.lastIndexOf(href) !== -1) {
+        if (styleSheet.href?.lastIndexOf(href) !== -1) {
           window[wdtkt].styleSheets[href] = styleSheet;
           break;
         }
@@ -189,7 +190,7 @@ const setWindowResize = () => {
 addEventListener("resize", setWindowResize);
 
 const key = getKeyScript();
-document.addEventListener("DOMContentLoaded", () => {
+const contentLoaded = () => {
   if (window !== top && innerWidth === 0) return;
   setWindowResize();
   const wd = window[wdtkt];
@@ -248,4 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
     wd.listItems[attrItemId] = item;
   });
   // console.log(document.styleSheets, wd);
-});
+};
+
+document.addEventListener("DOMContentLoaded", contentLoaded);

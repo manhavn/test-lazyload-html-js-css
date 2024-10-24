@@ -1,8 +1,4 @@
-section {
-  min-height: 15px;
-}
-
-section > * {
+body [data-type="section"] > * {
   max-width: 1200px;
   margin: 0 auto;
 }
