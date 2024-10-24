@@ -44,7 +44,7 @@ function run(elementId) {
     styleSheet0.cssRules.length,
   );
   styleSheet0.insertRule(
-    `[drop-zone-${iframeAppData.dataId}] { outline: 1px solid #0903 !important; }`,
+    `[drop-zone-${iframeAppData.dataId}] { outline: 1px solid #0909 !important; }`,
     styleSheet0.cssRules.length,
   );
 
@@ -184,16 +184,34 @@ function allowDrop(ev) {
     iframeAppData.allowDrop = target;
     const wd = iframeAppData.dataIframe;
     if (!wd.dataType) return;
-    const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-    if (allowDrop) {
-      const parentRemoveDrop = getParentElementByAttribute(
-        allowDrop,
+    if (wd.dataType === "section") {
+      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+      if (allowDrop) {
+        const parentRemoveDrop = getParentElementByAttribute(
+          allowDrop,
+          "data-type",
+          wd.dataType,
+        );
+        parentRemoveDrop?.removeAttribute(dropZoneId);
+      }
+      const parentAllowDrop = getParentElementByAttribute(
+        target,
+        "data-type",
         wd.dataType,
       );
-      parentRemoveDrop?.removeAttribute(dropZoneId);
+      parentAllowDrop?.setAttribute(dropZoneId, "");
+    } else {
+      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+      if (allowDrop) {
+        const parentRemoveDrop = getParentElementByAttribute(
+          allowDrop,
+          wd.dataType,
+        );
+        parentRemoveDrop?.removeAttribute(dropZoneId);
+      }
+      const parentAllowDrop = getParentElementByAttribute(target, wd.dataType);
+      parentAllowDrop?.setAttribute(dropZoneId, "");
     }
-    const parentAllowDrop = getParentElementByAttribute(target, wd.dataType);
-    parentAllowDrop?.setAttribute(dropZoneId, "");
   }
 }
 
@@ -210,21 +228,33 @@ function dragend(ev) {
   ev.preventDefault();
   const wd = iframeAppData.dataIframe;
   const allowDrop = iframeAppData.allowDrop;
-  if (allowDrop) {
-    const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-    const parentRemoveDrop = getParentElementByAttribute(
-      allowDrop,
-      wd.dataType,
-    );
-    parentRemoveDrop?.removeAttribute(dropZoneId);
+  if (allowDrop && wd.dataType) {
+    if (wd.dataType === "section") {
+      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+      const parentRemoveDrop = getParentElementByAttribute(
+        allowDrop,
+        "data-type",
+        wd.dataType,
+      );
+      parentRemoveDrop?.removeAttribute(dropZoneId);
+    } else {
+      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+      const parentRemoveDrop = getParentElementByAttribute(
+        allowDrop,
+        wd.dataType,
+      );
+      parentRemoveDrop?.removeAttribute(dropZoneId);
+    }
   }
   ev.dataTransfer.clearData();
   delete wd.dataType;
 }
 
-const getParentElementByAttribute = (el, attr) => {
+const getParentElementByAttribute = (el, attr, value) => {
   if (el) {
-    if (el.hasAttribute(attr)) {
+    if (value && el.getAttribute(attr) === value) {
+      return el;
+    } else if (!value && el.hasAttribute(attr)) {
       return el;
     } else {
       return getParentElementByAttribute(el.parentElement, attr);
@@ -243,7 +273,14 @@ function drop(ev) {
   const dataType = dataTransfer.getData("data-type");
   const newElement = document.createElement("div");
   if (dataType === "section") {
-    iframeAppData.contentDocument.body.appendChild(newElement);
+    const allowDrop = iframeAppData.allowDrop;
+    const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+    const parentRemoveDrop = getParentElementByAttribute(allowDrop, dropZoneId);
+    if (parentRemoveDrop) {
+      parentRemoveDrop.after(newElement);
+    } else {
+      iframeAppData.contentDocument.body.appendChild(newElement);
+    }
   } else {
     const dropElement = getParentElementByAttribute(ev.target, dataType);
     if (dropElement) dropElement.appendChild(newElement);
