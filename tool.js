@@ -7,6 +7,29 @@ function getRandomId() {
   );
 }
 
+async function requestAsync(url) {
+  const response = await fetch(url);
+  return response.ok ? await response.text() : "";
+}
+
+async function getDataFromItem(urlGet, dataType, dataId) {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = await requestAsync(
+    `${urlGet}/${dataType}/${dataId}.html`,
+  );
+  const html = tempDiv.firstElementChild;
+  const result = { html };
+  if (html && html.hasAttribute("js")) {
+    const js = await requestAsync(`${urlGet}/${dataType}/${dataId}.js`);
+    if (js) result.js = js;
+  }
+  if (html && html.hasAttribute("css")) {
+    const css = await requestAsync(`${urlGet}/${dataType}/${dataId}.css`);
+    if (css) result.css = css;
+  }
+  return result;
+}
+
 function moveAction() {
   console.log("moveAction");
 }
@@ -275,43 +298,58 @@ function exportHTML(callback) {
   };
 }
 
+function getParentElementByAttribute(el, attr, value) {
+  if (el) {
+    if (value && el.getAttribute(attr) === value) {
+      return el;
+    } else if (!value && el.hasAttribute(attr)) {
+      return el;
+    } else {
+      return getParentElementByAttribute(el.parentElement, attr, value);
+    }
+  } else {
+    return null;
+  }
+}
+
 function allowDrop(ev) {
   ev.preventDefault();
   const target = ev.target;
+  const wd = iframeAppData.dataIframe;
+  const dataType = wd.dataType;
+  if (!dataType) return;
+  const tmpDropElement = wd.tmpDropElement;
+  const hoverItem = getParentElementByAttribute(target, "data-type", dataType);
+  if (hoverItem) {
+    const rect = hoverItem.getBoundingClientRect();
+    wd.checkIsAfter = ev.offsetX / rect.width + ev.offsetY / rect.height >= 1;
+  }
   const allowDrop = iframeAppData.allowDrop;
-  if (allowDrop !== target) {
+  if (allowDrop !== target || wd.checkIsAfter !== wd.tmpCheckIsAfter) {
     const dropZoneId = removeDropZone();
     iframeAppData.allowDrop = target;
-    const wd = iframeAppData.dataIframe;
-    const dataType = wd.dataType;
-    if (!dataType) return;
-    const tmpDropElement = wd.tmpDropElement;
+    wd.tmpCheckIsAfter = wd.checkIsAfter;
+
+    const addDropPreviewLine = (parentItem) => {
+      if (target === parentItem) {
+        parentItem.appendChild(tmpDropElement);
+      } else if (hoverItem) {
+        if (wd.checkIsAfter) {
+          hoverItem.after(tmpDropElement);
+        } else {
+          hoverItem.before(tmpDropElement);
+        }
+      }
+    };
+
     if (dataType === "section") {
       const bodyIframe = iframeAppData.contentDocument.body;
-      if (target === bodyIframe) {
-        bodyIframe.appendChild(tmpDropElement);
-      } else {
-        const parentItem = getParentElementByAttribute(
-          target,
-          "data-type",
-          dataType,
-        );
-        if (parentItem) parentItem.after(tmpDropElement);
-      }
       // bodyIframe.setAttribute(dropZoneId, "");
+      addDropPreviewLine(bodyIframe);
     } else {
       const parentAllowDrop = getParentElementByAttribute(target, dataType);
       parentAllowDrop?.setAttribute(dropZoneId, "");
-      if (target === parentAllowDrop) {
-        parentAllowDrop.appendChild(tmpDropElement);
-      } else {
-        const parentItem = getParentElementByAttribute(
-          target,
-          "data-type",
-          dataType,
-        );
-        if (parentItem) parentItem.after(tmpDropElement);
-      }
+      addDropPreviewLine(parentAllowDrop);
     }
   }
 }
@@ -341,43 +379,6 @@ function dragend(ev) {
   delete wd.dataType;
 }
 
-function getParentElementByAttribute(el, attr, value) {
-  if (el) {
-    if (value && el.getAttribute(attr) === value) {
-      return el;
-    } else if (!value && el.hasAttribute(attr)) {
-      return el;
-    } else {
-      return getParentElementByAttribute(el.parentElement, attr, value);
-    }
-  } else {
-    return null;
-  }
-}
-
-async function requestAsync(url) {
-  const response = await fetch(url);
-  return response.ok ? await response.text() : "";
-}
-
-async function getDataFromItem(urlGet, dataType, dataId) {
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = await requestAsync(
-    `${urlGet}/${dataType}/${dataId}.html`,
-  );
-  const html = tempDiv.firstElementChild;
-  const result = { html };
-  if (html && html.hasAttribute("js")) {
-    const js = await requestAsync(`${urlGet}/${dataType}/${dataId}.js`);
-    if (js) result.js = js;
-  }
-  if (html && html.hasAttribute("css")) {
-    const css = await requestAsync(`${urlGet}/${dataType}/${dataId}.css`);
-    if (css) result.css = css;
-  }
-  return result;
-}
-
 function drop(ev) {
   ev.preventDefault();
   const target = ev.target;
@@ -391,8 +392,14 @@ function drop(ev) {
     "data-type",
     dataType,
   );
+
+  const wd = iframeAppData.dataIframe;
   if (parentRemoveDrop) {
-    parentRemoveDrop.after(newElement);
+    if (wd.checkIsAfter) {
+      parentRemoveDrop.after(newElement);
+    } else {
+      parentRemoveDrop.before(newElement);
+    }
   } else {
     if (dataType === "section") {
       const bodyIframe = iframeAppData.contentDocument.body;
@@ -404,7 +411,6 @@ function drop(ev) {
   }
   if (!newElement.isConnected) return;
 
-  const wd = iframeAppData.dataIframe;
   const urlGetDataItem = "drag";
   getDataFromItem(urlGetDataItem, dataType, dataId).then((r) => {
     if (r.html) {
