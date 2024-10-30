@@ -1,17 +1,17 @@
-const iframeAppData = {};
+const iframeAppData = { keyboard: {} };
 
-const getRandomId = () => {
+function getRandomId() {
   return (
     "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
     crypto.randomUUID().slice(0, 8)
   );
-};
+}
 
 function moveAction() {
   console.log("moveAction");
 }
 
-function onmousemove(event) {
+function onMouseMove(event) {
   event.preventDefault();
   iframeAppData.mousemove = event;
   clearTimeout(iframeAppData.mousemoveTimeout);
@@ -21,15 +21,73 @@ function onmousemove(event) {
 function parentAction(event) {
   event.preventDefault();
   iframeAppData[event.type] = event;
-  if (event.type === "mousedown") {
-    iframeAppData.contentWindow.onmousemove = onmousemove;
-  } else if (event.type === "mouseup") {
-    iframeAppData.contentWindow.onmousemove = null;
+}
+
+function blurAction(event) {
+  event.preventDefault();
+  const keyboard = iframeAppData.keyboard;
+  for (const keyboardKey in keyboard) {
+    if (keyboard[keyboardKey]) keyboard[keyboardKey] = false;
   }
 }
 
-function run(elementId) {
-  const appIframe = document.getElementById(elementId);
+function removeDropZone() {
+  iframeAppData.allowDrop = null;
+  const tmpDropElement = iframeAppData.dataIframe?.tmpDropElement;
+  if (tmpDropElement) tmpDropElement.parentElement?.removeChild(tmpDropElement);
+  const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
+  iframeAppData.contentDocument
+    .querySelectorAll(`[${dropZoneId}]`)
+    .forEach((el) => {
+      el.removeAttribute(dropZoneId);
+    });
+  return dropZoneId;
+}
+
+function onMouseDown(event) {
+  switch (event.button) {
+    case 0:
+      iframeAppData[event.type] = event;
+      const dropZoneId = removeDropZone();
+      event.target.setAttribute(dropZoneId, "");
+      iframeAppData.contentWindow.onmousemove = onMouseMove;
+      break;
+    case 2:
+      console.log(iframeAppData["mousedown"]?.target);
+      break;
+    default:
+      break;
+  }
+}
+
+function onMouseUp(event) {
+  event.preventDefault();
+  iframeAppData[event.type] = event;
+  iframeAppData.contentWindow.onmousemove = null;
+}
+
+function onKeyDown(event) {
+  event.preventDefault();
+  iframeAppData[event.type] = event;
+  iframeAppData.keyboard[event.key] = true;
+}
+
+function onKeyUp(event) {
+  event.preventDefault();
+  iframeAppData[event.type] = event;
+  iframeAppData.keyboard[event.key] = false;
+}
+
+function dragLeaveAction(event) {
+  event.preventDefault();
+  iframeAppData[event.type] = event;
+  if (event.target === iframeAppData.contentDocument.documentElement) {
+    removeDropZone();
+  }
+}
+
+function run(query) {
+  const appIframe = document.querySelector(query);
   const { contentWindow, contentDocument } = appIframe;
   iframeAppData.appIframe = appIframe;
   iframeAppData.contentWindow = contentWindow;
@@ -48,7 +106,7 @@ function run(elementId) {
     styleSheet0.cssRules.length,
   );
   styleSheet0.insertRule(
-    `[drop-zone-${iframeAppData.dataId}] { outline: 1px solid #0909 !important; }`,
+    `[drop-zone-${iframeAppData.dataId}] { outline: 1px dashed #0909 !important; }`,
     styleSheet0.cssRules.length,
   );
   styleSheet0.insertRule(
@@ -56,38 +114,63 @@ function run(elementId) {
     styleSheet0.cssRules.length,
   );
   styleSheet0.insertRule(
-    `[drag="layout"] [layout] { background-color: #0901 !important; }`,
+    `[drag="section"] [data-type="section"] { opacity: 0.5 !important; outline: 0.5px dashed #9009 !important; }`,
     styleSheet0.cssRules.length,
   );
   styleSheet0.insertRule(
-    `[drag="widget"] [widget] { background-color: #0901 !important; }`,
+    `[drag="layout"] [layout] { background-color: #0901 !important; outline: 0.5px dashed #0999; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `[drag="layout"] [data-type="layout"] { opacity: 0.5 !important; outline: 0.5px dashed #9009 !important; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `[drag="widget"] [widget] { background-color: #0901 !important; outline: 0.5px dashed #0999; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `[drag="widget"] [data-type="widget"] { opacity: 0.5 !important; outline: 0.5px dashed #9009 !important; }`,
+    styleSheet0.cssRules.length,
+  );
+  styleSheet0.insertRule(
+    `.tmp-drop-element { outline: 2px solid #0559 !important; }`,
     styleSheet0.cssRules.length,
   );
 
-  contentWindow.onmousedown = parentAction;
-  contentWindow.onmouseup = parentAction;
+  contentWindow.onmousedown = onMouseDown;
+  contentWindow.onmouseup = onMouseUp;
+
   contentWindow.onmouseover = parentAction;
   contentWindow.onmouseout = parentAction;
   contentWindow.onmouseenter = parentAction;
   contentWindow.onmouseleave = parentAction;
-  contentWindow.onauxclick = parentAction;
+
   contentWindow.onclick = parentAction;
-  contentWindow.onclose = parentAction;
+  contentWindow.onauxclick = parentAction;
   contentWindow.ondblclick = parentAction;
-  contentWindow.onabort = parentAction;
-  contentWindow.onblur = parentAction;
+  contentWindow.oncontextmenu = parentAction;
+
+  contentWindow.onblur = blurAction;
   contentWindow.onfocus = parentAction;
+
+  contentWindow.onclose = parentAction;
+  contentWindow.onabort = parentAction;
   contentWindow.onbeforeinput = parentAction;
   contentWindow.oninput = parentAction;
   contentWindow.onchange = parentAction;
   contentWindow.oncopy = parentAction;
   contentWindow.oncut = parentAction;
   contentWindow.onpaste = parentAction;
-  contentWindow.oncontextmenu = parentAction;
-  contentWindow.ondrag = parentAction;
-  contentWindow.ondrop = parentAction;
-  contentWindow.ondragover = parentAction;
-  contentWindow.ondragstart = parentAction;
+
+  // contentWindow.ondrag = parentAction;
+  // contentWindow.ondragstart = parentAction;
+  // contentWindow.ondragover = parentAction;
+  // contentWindow.ondrop = parentAction;
+  contentWindow.ondragleave = dragLeaveAction;
+
+  contentWindow.onkeydown = onKeyDown;
+  contentWindow.onkeyup = onKeyUp;
 
   URL.revokeObjectURL(appIframe.src);
 }
@@ -197,36 +280,38 @@ function allowDrop(ev) {
   const target = ev.target;
   const allowDrop = iframeAppData.allowDrop;
   if (allowDrop !== target) {
+    const dropZoneId = removeDropZone();
     iframeAppData.allowDrop = target;
     const wd = iframeAppData.dataIframe;
-    if (!wd.dataType) return;
-    if (wd.dataType === "section") {
-      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-      if (allowDrop) {
-        const parentRemoveDrop = getParentElementByAttribute(
-          allowDrop,
+    const dataType = wd.dataType;
+    if (!dataType) return;
+    const tmpDropElement = wd.tmpDropElement;
+    if (dataType === "section") {
+      const bodyIframe = iframeAppData.contentDocument.body;
+      if (target === bodyIframe) {
+        bodyIframe.appendChild(tmpDropElement);
+      } else {
+        const parentItem = getParentElementByAttribute(
+          target,
           "data-type",
-          wd.dataType,
+          dataType,
         );
-        parentRemoveDrop?.removeAttribute(dropZoneId);
+        if (parentItem) parentItem.after(tmpDropElement);
       }
-      const parentAllowDrop = getParentElementByAttribute(
-        target,
-        "data-type",
-        wd.dataType,
-      );
-      parentAllowDrop?.setAttribute(dropZoneId, "");
+      // bodyIframe.setAttribute(dropZoneId, "");
     } else {
-      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-      if (allowDrop) {
-        const parentRemoveDrop = getParentElementByAttribute(
-          allowDrop,
-          wd.dataType,
-        );
-        parentRemoveDrop?.removeAttribute(dropZoneId);
-      }
-      const parentAllowDrop = getParentElementByAttribute(target, wd.dataType);
+      const parentAllowDrop = getParentElementByAttribute(target, dataType);
       parentAllowDrop?.setAttribute(dropZoneId, "");
+      if (target === parentAllowDrop) {
+        parentAllowDrop.appendChild(tmpDropElement);
+      } else {
+        const parentItem = getParentElementByAttribute(
+          target,
+          "data-type",
+          dataType,
+        );
+        if (parentItem) parentItem.after(tmpDropElement);
+      }
     }
   }
 }
@@ -239,48 +324,36 @@ function dragstart(ev) {
   dataTransfer.setData("data-id", target.id);
   dataTransfer.setData("data-type", dataType);
   iframeAppData.contentDocument.documentElement.setAttribute("drag", dataType);
+  removeDropZone();
+  const tmpDropElement = document.createElement("div");
+  tmpDropElement.classList.add("tmp-drop-element");
+  wd.tmpDropElement = tmpDropElement;
 }
 
 function dragend(ev) {
   ev.preventDefault();
   iframeAppData.contentDocument.documentElement.removeAttribute("drag");
   const wd = iframeAppData.dataIframe;
-  const allowDrop = iframeAppData.allowDrop;
-  if (allowDrop && wd.dataType) {
-    if (wd.dataType === "section") {
-      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-      const parentRemoveDrop = getParentElementByAttribute(
-        allowDrop,
-        "data-type",
-        wd.dataType,
-      );
-      parentRemoveDrop?.removeAttribute(dropZoneId);
-    } else {
-      const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-      const parentRemoveDrop = getParentElementByAttribute(
-        allowDrop,
-        wd.dataType,
-      );
-      parentRemoveDrop?.removeAttribute(dropZoneId);
-    }
-  }
+  removeDropZone();
+  wd.tmpDropElement?.remove();
+  wd.tmpDropElement = null;
   ev.dataTransfer.clearData();
   delete wd.dataType;
 }
 
-const getParentElementByAttribute = (el, attr, value) => {
+function getParentElementByAttribute(el, attr, value) {
   if (el) {
     if (value && el.getAttribute(attr) === value) {
       return el;
     } else if (!value && el.hasAttribute(attr)) {
       return el;
     } else {
-      return getParentElementByAttribute(el.parentElement, attr);
+      return getParentElementByAttribute(el.parentElement, attr, value);
     }
   } else {
     return null;
   }
-};
+}
 
 async function requestAsync(url) {
   const response = await fetch(url);
@@ -307,26 +380,31 @@ async function getDataFromItem(urlGet, dataType, dataId) {
 
 function drop(ev) {
   ev.preventDefault();
+  const target = ev.target;
   const dataTransfer = ev.dataTransfer;
 
-  const wd = iframeAppData.dataIframe;
   const dataId = dataTransfer.getData("data-id");
   const dataType = dataTransfer.getData("data-type");
   const newElement = document.createElement("div");
-  if (dataType === "section") {
-    const allowDrop = iframeAppData.allowDrop;
-    const dropZoneId = `drop-zone-${iframeAppData.dataId}`;
-    const parentRemoveDrop = getParentElementByAttribute(allowDrop, dropZoneId);
-    if (parentRemoveDrop) {
-      parentRemoveDrop.after(newElement);
-    } else {
-      iframeAppData.contentDocument.body.appendChild(newElement);
-    }
+  const parentRemoveDrop = getParentElementByAttribute(
+    iframeAppData.allowDrop,
+    "data-type",
+    dataType,
+  );
+  if (parentRemoveDrop) {
+    parentRemoveDrop.after(newElement);
   } else {
-    const dropElement = getParentElementByAttribute(ev.target, dataType);
-    if (dropElement) dropElement.appendChild(newElement);
+    if (dataType === "section") {
+      const bodyIframe = iframeAppData.contentDocument.body;
+      bodyIframe.appendChild(newElement);
+    } else {
+      const dropElement = getParentElementByAttribute(target, dataType);
+      if (dropElement) dropElement.appendChild(newElement);
+    }
   }
+  if (!newElement.isConnected) return;
 
+  const wd = iframeAppData.dataIframe;
   const urlGetDataItem = "drag";
   getDataFromItem(urlGetDataItem, dataType, dataId).then((r) => {
     if (r.html) {
@@ -366,7 +444,7 @@ function drop(ev) {
   });
 }
 
-const reloadEventListenerItem = (item, jsUrl) => {
+function reloadEventListenerItem(item, jsUrl) {
   const wd = iframeAppData.dataIframe;
   if (!item) return;
   const cloneItem = item.cloneNode(true);
@@ -377,16 +455,17 @@ const reloadEventListenerItem = (item, jsUrl) => {
   } else {
     cloneItem.remove();
   }
-};
+}
 
-const itemMouseDown = (ev) => {
+function itemMouseDown(ev) {
   const target = ev.target;
   target.ondragstart = dragstart;
   target.ondragend = dragend;
+  if (!iframeAppData.contentDocument) return;
   const body = iframeAppData.contentDocument.body;
   body.ondrop = drop;
   body.ondragover = allowDrop;
-};
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log(iframeAppData);
@@ -397,6 +476,13 @@ document.addEventListener("DOMContentLoaded", () => {
     iframeAppData.appIframe.srcdoc = html;
   };
   document.getElementById("export").onclick = exportHTML(callback);
+  document.getElementById("log-data").onclick = () => {
+    console.log(iframeAppData);
+  };
+
+  window.ondragover = () => {
+    if (iframeAppData.allowDrop) removeDropZone();
+  };
 
   const listSection = document.getElementById("list-section");
   for (let i = 0; i < listSection.children.length; i++) {
