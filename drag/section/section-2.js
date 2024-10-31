@@ -14,5 +14,6 @@
     }
   };
   startObs(actionCallback, key);
+  console.log("section section-2.js", key);
 })();
 document.currentScript.remove();

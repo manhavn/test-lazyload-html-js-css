@@ -21,6 +21,8 @@ if (isTop) document.currentScript.remove();
   const scriptContents = {};
   const styleContents = {};
   const childSource = {};
+  const tmpSourceCss = {};
+  const tmpSourceJs = {};
   const dataApp = {
     attrItemId,
     jsSrcFolder,
@@ -32,6 +34,8 @@ if (isTop) document.currentScript.remove();
     listIntersecting,
     obIntersecting,
     childSource,
+    tmpSourceCss,
+    tmpSourceJs,
   };
   window[wdtkt] = dataApp;
   setInterval(() => {
@@ -51,83 +55,131 @@ if (isTop) document.currentScript.remove();
     if (dataApp.obIntersecting !== obIntersecting)
       dataApp.obIntersecting = obIntersecting;
     if (dataApp.childSource !== childSource) dataApp.childSource = childSource;
+    if (dataApp.tmpSourceCss !== tmpSourceCss)
+      dataApp.tmpSourceCss = tmpSourceCss;
+    if (dataApp.tmpSourceJs !== tmpSourceJs) dataApp.tmpSourceJs = tmpSourceJs;
   }, 1000);
 })();
 
 const loadScript = (url, item, attrItemId) => {
   if (item.hasAttribute("js")) {
     const htmlVersion = document.documentElement.getAttribute("version") || "";
-    const script = document.createElement("script");
     const href = item.getAttribute("js") || `${url}?${htmlVersion}`;
-    script.src = href;
-    script.type = "text/javascript";
-    script.onerror = () => {
-      if (isTop) item.remove();
-      script.remove();
+    const script = document.createElement("script");
+    if (attrItemId) script.setAttribute("script-id", attrItemId);
+    const applyUrlSource = () => {
+      script.src = href;
+      script.type = "text/javascript";
+      script.onerror = () => {
+        if (isTop) item.remove();
+        script.remove();
+      };
+      script.onload = () => {
+        if (!isTop && attrItemId) {
+          fetch(href)
+            .then((r) => {
+              return r.ok ? r.text() : "";
+            })
+            .then((text) => {
+              if (attrItemId) window[wdtkt].scriptContents[attrItemId] = text;
+            });
+        }
+        URL.revokeObjectURL(href);
+        script.remove();
+      };
+      document.head.appendChild(script);
     };
-    script.onload = () => {
-      if (!isTop && attrItemId) {
-        fetch(href)
-          .then((r) => {
-            return r.text();
-          })
-          .then((text) => {
-            window[wdtkt].scriptContents[attrItemId] = text;
-          });
+    (async function () {
+      try {
+        const response = await fetch(href);
+        if (!response.ok) {
+          throw new Error(`Response status: ${response.status}`);
+        }
+        const text = await response.text();
+        if (attrItemId) window[wdtkt].scriptContents[attrItemId] = text;
+        script.textContent = text;
+        document.head.appendChild(script);
+        if (script.isConnected) script.remove();
+      } catch (error) {
+        applyUrlSource();
       }
-      URL.revokeObjectURL(href);
-      script.remove();
-    };
-    document.head.appendChild(script);
+    })();
   }
 };
 
 const loadStyleCss = (url, item, attrItemId) => {
   if (!item || item.hasAttribute("css")) {
     const htmlVersion = document.documentElement.getAttribute("version") || "";
-    const link = document.createElement("link");
     const href = item?.getAttribute("css") || `${url}?${htmlVersion}`;
-    link.href = href;
-    link.rel = "stylesheet";
-    link.onerror = () => {
-      if (isTop && item) item.remove();
-      link.remove();
-    };
-    link.onload = () => {
-      if (!isTop && attrItemId) {
-        fetch(href)
-          .then((r) => {
-            return r.text();
-          })
-          .then((text) => {
-            window[wdtkt].styleContents[attrItemId] = text;
-          });
-      }
-      URL.revokeObjectURL(href);
-      for (let i = 0; i < document.styleSheets.length; i++) {
-        const styleSheet = document.styleSheets.item(i);
-        if (styleSheet.href?.lastIndexOf(href) !== -1) {
-          window[wdtkt].styleSheets[href] = styleSheet;
-          break;
+    const applyUrlSource = () => {
+      const link = document.createElement("link");
+      link.href = href;
+      link.rel = "stylesheet";
+      link.onerror = () => {
+        if (isTop && item) item.remove();
+        link.remove();
+      };
+      link.onload = () => {
+        if (!isTop && attrItemId) {
+          link.setAttribute("style-id", attrItemId);
+          fetch(href)
+            .then((r) => {
+              return r.ok ? r.text() : "";
+            })
+            .then((text) => {
+              if (attrItemId) window[wdtkt].styleContents[attrItemId] = text;
+            });
         }
-      }
+        URL.revokeObjectURL(href);
+        for (let i = 0; i < document.styleSheets.length; i++) {
+          const styleSheet = document.styleSheets.item(i);
+          if (styleSheet.href?.lastIndexOf(href) !== -1) {
+            window[wdtkt].styleSheets[href] = styleSheet;
+            break;
+          }
+        }
+      };
+      document.head.appendChild(link);
     };
-    document.head.appendChild(link);
+    if (!isTop) {
+      (async function () {
+        try {
+          const response = await fetch(href);
+          if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+          }
+          const style = document.createElement("style");
+          const text = await response.text();
+          if (attrItemId) {
+            style.setAttribute("style-id", attrItemId);
+            window[wdtkt].styleContents[attrItemId] = text;
+          } else {
+            style.setAttribute("style-id", getRandomId());
+          }
+          style.textContent = text;
+          document.head.appendChild(style);
+        } catch (error) {
+          applyUrlSource();
+        }
+      })();
+    } else {
+      applyUrlSource();
+    }
   }
 };
 
 const getKeyScript = () => {
-  const src = document.currentScript.src;
+  const currentScript = document.currentScript;
+  const src = currentScript.src;
+  const scriptId = currentScript.getAttribute("script-id");
   return (
-    window[wdtkt]?.[src] ||
+    scriptId ||
+    window[wdtkt]?.tmpSourceJs[src] ||
     src
       .split("/")
       .pop()
-      .split("?")
-      .shift()
-      .split("#")
-      .shift()
-      .replace(/\.js$/, "")
+      .replace(/\.min\.js(\S+)?$/, "")
+      .replace(/\.js(\S+)?$/, "")
   );
 };
 
@@ -237,36 +289,37 @@ const contentLoaded = () => {
         const responseCss = await fetch(
           `${wd.cssSrcFolder}${oldId}.css?${attrItemId}${htmlVersion}`,
         );
+        const data = [];
         if (responseCss.ok) {
-          const data = await responseCss.text();
-          const cssBlobData = new Blob(
-            [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
-            { type: "text/css" },
+          const content = `${(await responseCss.text()) || ""}`.replace(
+            new RegExp(oldId, "g"),
+            attrItemId,
           );
-          const cssUrl = URL.createObjectURL(cssBlobData);
-          item.setAttribute("css", cssUrl);
-        } else {
-          const cssBlobData = new Blob([], { type: "text/css" });
-          item.setAttribute("css", URL.createObjectURL(cssBlobData));
+          data.push(content);
         }
+        const cssUrl = URL.createObjectURL(
+          new Blob(data, { type: "text/css" }),
+        );
+        item.setAttribute("css", cssUrl);
+        window[wdtkt].tmpSourceCss[cssUrl] = attrItemId;
       }
       if (item.hasAttribute("js")) {
         const responseJs = await fetch(
           `${wd.jsSrcFolder}${oldId}.js?${attrItemId}${htmlVersion}`,
         );
+        const data = [];
         if (responseJs.ok) {
-          const data = await responseJs.text();
-          const jsBlobData = new Blob(
-            [`${data}`.replace(new RegExp(oldId, "g"), attrItemId)],
-            { type: "application/javascript" },
+          const content = `${(await responseJs.text()) || ""}`.replace(
+            new RegExp(oldId, "g"),
+            attrItemId,
           );
-          const jsUrl = URL.createObjectURL(jsBlobData);
-          window[wdtkt][jsUrl] = attrItemId;
-          item.setAttribute("js", jsUrl);
-        } else {
-          const jsBlobData = new Blob([], { type: "application/javascript" });
-          item.setAttribute("js", URL.createObjectURL(jsBlobData));
+          data.push(content);
         }
+        const jsUrl = URL.createObjectURL(
+          new Blob(data, { type: "application/javascript" }),
+        );
+        item.setAttribute("js", jsUrl);
+        window[wdtkt].tmpSourceJs[jsUrl] = attrItemId;
       }
     }
     mapCheckExists[attrItemId] = true;

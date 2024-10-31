@@ -17,5 +17,6 @@
     }
   };
   startObs(actionCallback, key, 0.5);
+  console.log("layout layout-2.js", key);
 })();
 document.currentScript.remove();

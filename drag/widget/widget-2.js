@@ -1,1 +1,1 @@
-console.log("widget 2");
+console.log("widget widget-2.js");
