@@ -18,6 +18,14 @@
           opacity: 0;
         }
       }
+
+      [absolute] {
+        position: relative;
+      }
+
+      [absolute] > * {
+        position: absolute;
+      }
     </style>
     <script>
       setTimeout(() => {

@@ -8,9 +8,4 @@
   width: calc(var(--layout-1-width) * 1px);
   height: calc(var(--layout-1-height) * 1px);
   overflow: hidden;
-  position: relative;
-}
-
-[itd="layout-1"] > [widget] > * {
-  position: absolute;
 }

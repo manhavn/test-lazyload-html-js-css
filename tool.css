@@ -1,3 +1,7 @@
+.flex-tow-item {
+  display: flex;
+}
+
 .menu-item {
   overflow-y: scroll;
   height: 80vh;
