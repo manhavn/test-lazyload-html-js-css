@@ -67,16 +67,24 @@ function removeDropZone() {
   return dropZoneId;
 }
 
+function openContextMenu() {
+  console.log(iframeAppData.iframeEvent["mousedown"]?.target);
+}
+
 function onMouseDown(event) {
+  const iframeEvent = iframeAppData.iframeEvent;
   switch (event.button) {
     case 0:
-      iframeAppData.iframeEvent[event.type] = event;
+      iframeEvent[event.type] = event;
       const dropZoneId = removeDropZone();
       event.target.setAttribute(dropZoneId, "");
       iframeAppData.contentWindow.onmousemove = onMouseMove;
       break;
     case 2:
-      console.log(iframeAppData.iframeEvent["mousedown"]?.target);
+      if (!iframeEvent[event.type]) {
+        iframeEvent[event.type] = event;
+      }
+      openContextMenu();
       break;
     default:
       break;
