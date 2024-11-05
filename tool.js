@@ -289,15 +289,17 @@ function getParentElementByAttribute(el, attr, value) {
 
 function allowDrop(ev) {
   ev.preventDefault();
-  const target = ev.target;
   const wd = iframeAppData.dataIframe;
   const dataType = wd.dataType;
   if (!dataType) return;
+  const { target, offsetX, offsetY } = ev;
+  const { offsetWidth, offsetHeight } = target;
+  iframeAppData.offsetDrop = { offsetX, offsetY, offsetWidth, offsetHeight };
   const tmpDropElement = wd.tmpDropElement;
   const hoverItem = getParentElementByAttribute(target, "data-type", dataType);
   if (hoverItem) {
     const rect = hoverItem.getBoundingClientRect();
-    wd.checkIsAfter = ev.offsetX / rect.width + ev.offsetY / rect.height >= 1;
+    wd.checkIsAfter = offsetX / rect.width + offsetY / rect.height >= 1;
   }
   const allowDrop = iframeAppData.allowDrop;
   if (allowDrop !== target || wd.checkIsAfter !== wd.tmpCheckIsAfter) {
