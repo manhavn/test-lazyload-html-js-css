@@ -133,7 +133,7 @@ const loadStyleCss = (url, item, attrItemId) => {
         URL.revokeObjectURL(href);
         for (let i = 0; i < document.styleSheets.length; i++) {
           const styleSheet = document.styleSheets.item(i);
-          if (styleSheet.href?.lastIndexOf(href) !== -1) {
+          if (styleSheet.href && styleSheet.href.lastIndexOf(href) !== -1) {
             window[wdtkt].styleSheets[href] = styleSheet;
             break;
           }
@@ -141,30 +141,7 @@ const loadStyleCss = (url, item, attrItemId) => {
       };
       document.head.appendChild(link);
     };
-    if (false && !isTop) {
-      (async function () {
-        try {
-          const response = await fetch(href);
-          if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-          }
-          const style = document.createElement("style");
-          const text = await response.text();
-          if (attrItemId) {
-            style.setAttribute("style-id", attrItemId);
-            window[wdtkt].styleContents[attrItemId] = text;
-          } else {
-            style.setAttribute("style-id", getRandomId());
-          }
-          style.textContent = text;
-          document.head.appendChild(style);
-        } catch (error) {
-          applyUrlSource();
-        }
-      })();
-    } else {
-      applyUrlSource();
-    }
+    applyUrlSource();
   }
 };
 
@@ -174,7 +151,9 @@ const getKeyScript = () => {
   const scriptId = currentScript.getAttribute("script-id");
   return (
     scriptId ||
-    window[wdtkt]?.tmpSourceJs[src] ||
+    (window[wdtkt] &&
+      window[wdtkt].tmpSourceJs &&
+      window[wdtkt].tmpSourceJs[src]) ||
     src
       .split("/")
       .pop()

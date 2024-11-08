@@ -37,8 +37,8 @@ function moveAction() {
 function onMouseMove(event) {
   event.preventDefault();
   iframeAppData.iframeEvent[event.type] = event;
-  clearTimeout(iframeAppData.iframeEvent["mousemoveTimeout"]);
-  iframeAppData.iframeEvent["mousemoveTimeout"] = setTimeout(moveAction, 10);
+  clearTimeout(iframeAppData.iframeEvent.mousemoveTimeout);
+  iframeAppData.iframeEvent.mousemoveTimeout = setTimeout(moveAction, 10);
 }
 
 function parentAction(event) {
@@ -128,11 +128,11 @@ function run(query) {
   iframeAppData.dataId = dataId;
 
   const style = document.createElement("style");
-  style.setAttribute("style-id", iframeAppData.dataId);
+  style.setAttribute("style-id", dataId);
   style.textContent = `
   body { min-width: 90vw; min-height: 90vh; }
   body [data-type="section"] { min-height: 15px; }
-  html [drop-zone-${iframeAppData.dataId}] { outline: 1px dashed #0909 !important; }
+  html [drop-zone-${dataId}] { outline: 1px dashed #0909 !important; }
   [drag="section"] body { background-color: #0901 !important; }
   [drag="layout"] body, [drag="widget"] body, [drag="widget"] [layout] { background-color: #90000006 !important; }
   [drag="layout"] [layout], [drag="widget"] [widget] { background-color: #0901; outline: 0.5px dashed #0999; }
