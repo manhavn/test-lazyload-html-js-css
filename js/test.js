@@ -141,7 +141,7 @@ const loadStyleCss = (url, item, attrItemId) => {
       };
       document.head.appendChild(link);
     };
-    if (!isTop) {
+    if (false && !isTop) {
       (async function () {
         try {
           const response = await fetch(href);
