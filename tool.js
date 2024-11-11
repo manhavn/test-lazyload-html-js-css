@@ -473,21 +473,35 @@ function addItemMove(ev) {
   const addItem = iframeAppData.addItem;
   const isTouch = !!ev.touches;
   const moveEvent = isTouch ? ev.touches[0] : ev;
-  addItem.clientX = moveEvent.clientX;
-  addItem.clientY = moveEvent.clientY;
+  if (
+    iframeAppData.contentDocument &&
+    iframeAppData.contentDocument.contains(ev.target)
+  ) {
+    addItem.clientX = moveEvent.clientX + iframeAppData.appIframeOffsetLeft;
+    addItem.clientY = moveEvent.clientY + iframeAppData.appIframeOffsetTop;
+  } else {
+    addItem.clientX = moveEvent.clientX;
+    addItem.clientY = moveEvent.clientY;
+  }
   addItem.dragItem.style.left = `${addItem.clientX - addItem.dragItem.offsetWidth / 2}px`;
   addItem.dragItem.style.top = `${addItem.clientY - addItem.dragItem.offsetHeight / 2}px`;
 }
 
 function addItemSetupData() {
   const addItem = iframeAppData.addItem;
-  console.log(addItem.clientX, addItem.clientY, "addItemSetupData");
+  const iframeItemX = addItem.clientX - iframeAppData.appIframeOffsetLeft;
+  const iframeItemY = addItem.clientY - iframeAppData.appIframeOffsetTop;
+  console.log(iframeItemX, iframeItemY, "addItemSetupData");
 }
 
 function addItemEnd(ev) {
   ev.preventDefault();
   document.removeEventListener("mousemove", addItemMove);
   document.removeEventListener("mouseup", addItemEnd);
+  if (iframeAppData.contentDocument) {
+    iframeAppData.contentDocument.removeEventListener("mousemove", addItemMove);
+    iframeAppData.contentDocument.removeEventListener("mouseup", addItemEnd);
+  }
   iframeAppData.addItem.dragItem.remove();
   addItemSetupData();
 }
@@ -498,6 +512,8 @@ function touchCancel(ev) {
 }
 
 function itemAddItemStart(ev) {
+  ev.preventDefault();
+  if (ev.button === 2) return;
   const addItem = iframeAppData.addItem;
   const target = ev.target;
   const isTouch = !!ev.touches;
@@ -505,10 +521,16 @@ function itemAddItemStart(ev) {
   if (!isTouch) {
     document.addEventListener("mousemove", addItemMove);
     document.addEventListener("mouseup", addItemEnd);
+    if (iframeAppData.contentDocument) {
+      iframeAppData.contentDocument.addEventListener("mousemove", addItemMove);
+      iframeAppData.contentDocument.addEventListener("mouseup", addItemEnd);
+    }
   }
   addItem.clientX = moveEvent.clientX;
   addItem.clientY = moveEvent.clientY;
   if (!iframeAppData.contentDocument) return;
+  iframeAppData.appIframeOffsetTop = iframeAppData.appIframe.offsetTop || 0;
+  iframeAppData.appIframeOffsetLeft = iframeAppData.appIframe.offsetLeft || 0;
   const dragItem = target.cloneNode(true);
   target.after(dragItem);
   addItem.dragItem = dragItem;
