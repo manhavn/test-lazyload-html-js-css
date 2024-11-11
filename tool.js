@@ -1,4 +1,4 @@
-const iframeAppData = { keyboard: {}, iframeEvent: {} };
+const iframeAppData = { keyboard: {}, iframeEvent: {}, addItem: {} };
 
 function getRandomId() {
   return (
@@ -361,6 +361,14 @@ function dragend(ev) {
   wd.tmpDropElement?.remove();
   wd.tmpDropElement = null;
   delete wd.dataType;
+
+  const target = ev.target;
+  target.removeAttribute("draggable");
+  target.ondragstart = null;
+  target.ondragend = null;
+  const body = iframeAppData.contentDocument.body;
+  body.ondrop = null;
+  body.ondragover = null;
 }
 
 function drop(ev) {
@@ -451,12 +459,62 @@ function reloadEventListenerItem(item, jsUrl) {
 
 function itemMouseDown(ev) {
   const target = ev.target;
+  target.setAttribute("draggable", "true");
   target.ondragstart = dragstart;
   target.ondragend = dragend;
   if (!iframeAppData.contentDocument) return;
   const body = iframeAppData.contentDocument.body;
   body.ondrop = drop;
   body.ondragover = allowDrop;
+}
+
+function addItemMove(ev) {
+  ev.preventDefault();
+  const addItem = iframeAppData.addItem;
+  const isTouch = !!ev.touches;
+  const moveEvent = isTouch ? ev.touches[0] : ev;
+  addItem.clientX = moveEvent.clientX;
+  addItem.clientY = moveEvent.clientY;
+  addItem.dragItem.style.left = `${addItem.clientX - addItem.dragItem.offsetWidth / 2}px`;
+  addItem.dragItem.style.top = `${addItem.clientY - addItem.dragItem.offsetHeight / 2}px`;
+}
+
+function addItemSetupData() {
+  const addItem = iframeAppData.addItem;
+  console.log(addItem.clientX, addItem.clientY, "addItemSetupData");
+}
+
+function addItemEnd(ev) {
+  ev.preventDefault();
+  document.removeEventListener("mousemove", addItemMove);
+  document.removeEventListener("mouseup", addItemEnd);
+  iframeAppData.addItem.dragItem.remove();
+  addItemSetupData();
+}
+
+function touchCancel(ev) {
+  ev.preventDefault();
+  iframeAppData.addItem.dragItem.remove();
+}
+
+function itemAddItemStart(ev) {
+  const addItem = iframeAppData.addItem;
+  const target = ev.target;
+  const isTouch = !!ev.touches;
+  const moveEvent = isTouch ? ev.touches[0] : ev;
+  if (!isTouch) {
+    document.addEventListener("mousemove", addItemMove);
+    document.addEventListener("mouseup", addItemEnd);
+  }
+  addItem.clientX = moveEvent.clientX;
+  addItem.clientY = moveEvent.clientY;
+  if (!iframeAppData.contentDocument) return;
+  const dragItem = target.cloneNode(true);
+  target.after(dragItem);
+  addItem.dragItem = dragItem;
+  dragItem.style.position = "absolute";
+  dragItem.style.left = `${addItem.clientX - dragItem.offsetWidth / 2}px`;
+  dragItem.style.top = `${addItem.clientY - dragItem.offsetHeight / 2}px`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -476,16 +534,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (iframeAppData.allowDrop) removeDropZone();
   };
 
-  const listSection = document.getElementById("list-section");
-  for (let i = 0; i < listSection.children.length; i++) {
-    listSection.children[i].addEventListener("mousedown", itemMouseDown);
+  function addEventListItem(list) {
+    for (let i = 0; i < list.children.length; i++) {
+      const target = list.children[i];
+      // target.addEventListener("mousedown", itemMouseDown);
+      target.addEventListener("mousedown", itemAddItemStart);
+      target.addEventListener("touchstart", itemAddItemStart);
+      target.addEventListener("touchmove", addItemMove);
+      target.addEventListener("touchend", addItemEnd);
+      target.addEventListener("touchcancel", touchCancel);
+    }
   }
-  const listLayout = document.getElementById("list-layout");
-  for (let i = 0; i < listLayout.children.length; i++) {
-    listLayout.children[i].addEventListener("mousedown", itemMouseDown);
-  }
-  const listWidget = document.getElementById("list-widget");
-  for (let i = 0; i < listWidget.children.length; i++) {
-    listWidget.children[i].addEventListener("mousedown", itemMouseDown);
-  }
+
+  addEventListItem(document.getElementById("list-section"));
+  addEventListItem(document.getElementById("list-layout"));
+  addEventListItem(document.getElementById("list-widget"));
 });
