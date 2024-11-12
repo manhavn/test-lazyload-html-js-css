@@ -468,31 +468,37 @@ function itemMouseDown(ev) {
 
 function executeAddItem(ev, [ol, ot]) {
   const addItem = iframeAppData.addItem;
-  const dragItem = addItem.dragItem;
-  if (!dragItem) return;
-  const isTouch = !!ev.touches;
-  const { clientX, clientY } = isTouch ? ev.touches[0] : ev;
+  const touches = ev.touches;
+  const { clientX, clientY } = touches ? touches[0] : ev;
   addItem.clientX = clientX + ol;
   addItem.clientY = clientY + ot;
-  dragItem.style.left = `${addItem.clientX - dragItem.offsetWidth / 2}px`;
-  dragItem.style.top = `${addItem.clientY - dragItem.offsetHeight / 2}px`;
+}
+
+function setStyleItem() {
+  const { dragItem, clientX, clientY } = iframeAppData.addItem;
+  if (!dragItem) return;
+  const { style, offsetWidth, offsetHeight } = dragItem;
+  style.left = `${clientX - offsetWidth / 2}px`;
+  style.top = `${clientY - offsetHeight / 2}px`;
 }
 
 function addItemMove(ev) {
   ev.preventDefault();
   executeAddItem(ev, [0, 0]);
+  setStyleItem();
 }
 
 function addItemMoveIframe(ev) {
   ev.preventDefault();
-  const addItem = iframeAppData.addItem;
-  executeAddItem(ev, [addItem.offsetLeft, addItem.offsetTop]);
+  const { offsetLeft, offsetTop } = iframeAppData.addItem;
+  executeAddItem(ev, [offsetLeft, offsetTop]);
+  setStyleItem();
 }
 
 function addItemSetupData() {
-  const addItem = iframeAppData.addItem;
-  const iframeItemX = addItem.clientX - addItem.offsetLeft;
-  const iframeItemY = addItem.clientY - addItem.offsetTop;
+  const { clientX, offsetLeft, clientY, offsetTop } = iframeAppData.addItem;
+  const iframeItemX = clientX - offsetLeft;
+  const iframeItemY = clientY - offsetTop;
   console.log(iframeItemX, iframeItemY, "addItemSetupData");
 }
 
