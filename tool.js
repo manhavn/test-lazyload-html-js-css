@@ -1,10 +1,13 @@
 const iframeAppData = { keyboard: {}, iframeEvent: {}, addItem: {} };
 
 function getRandomId() {
-  return (
-    "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
-    crypto.randomUUID().slice(0, 8)
-  );
+  const digits = "abcdefghijklmnopqrstuvwxyz";
+  const n = digits.length;
+  let uuid = "";
+  for (let i = 0; i < 8; i++) {
+    uuid += digits[Math.floor(Math.random() * n)];
+  }
+  return uuid;
 }
 
 async function requestAsync(url) {
@@ -44,6 +47,7 @@ function onMouseMove(event) {
 function parentAction(event) {
   event.preventDefault();
   iframeAppData.iframeEvent[event.type] = event;
+  console.log(event.type);
 }
 
 function blurAction(event) {
@@ -305,7 +309,6 @@ function allowDrop(ev) {
   iframeAppData.offsetDrop = { offsetX, offsetY, offsetWidth, offsetHeight };
   const tmpDropElement = wd.tmpDropElement;
   const hoverItem = getParentElementByAttribute(target, "data-type", dataType);
-  console.log(hoverItem, target, offsetX);
   if (hoverItem) {
     const rect = hoverItem.getBoundingClientRect();
     wd.checkIsAfter = offsetX / rect.width + offsetY / rect.height >= 1;
@@ -483,7 +486,7 @@ function setStyleItem() {
 }
 
 function addItemMove(ev) {
-  ev.preventDefault();
+  if (ev.type !== "touchmove") ev.preventDefault();
   executeAddItem(ev, [0, 0]);
   setStyleItem();
 }
@@ -496,14 +499,15 @@ function addItemMoveIframe(ev) {
 }
 
 function addItemSetupData() {
-  const { clientX, offsetLeft, clientY, offsetTop } = iframeAppData.addItem;
+  const { dragItem, clientX, offsetLeft, clientY, offsetTop } =
+    iframeAppData.addItem;
+  if (!dragItem) return;
   const iframeItemX = clientX - offsetLeft;
   const iframeItemY = clientY - offsetTop;
   console.log(iframeItemX, iframeItemY, "addItemSetupData");
 }
 
-function addItemCancel(ev) {
-  ev.preventDefault();
+function addItemCancel() {
   document.removeEventListener("mousemove", addItemMove);
   document.removeEventListener("mouseup", addItemEnd);
   const contentDocument = iframeAppData.contentDocument;
@@ -512,22 +516,23 @@ function addItemCancel(ev) {
     contentDocument.removeEventListener("mouseup", addItemEnd);
   }
   const addItem = iframeAppData.addItem;
-  addItem.dragItem.remove();
+  addItem.dragItem?.remove();
   delete addItem.dragItem;
 }
 
-function addItemEnd(ev) {
+function addItemEnd() {
   addItemSetupData();
-  addItemCancel(ev);
+  addItemCancel();
 }
 
 function addItemStart(ev) {
-  ev.preventDefault();
+  if (ev.type !== "touchstart") ev.preventDefault();
+  addItemCancel();
   if (ev.button === 2) return;
   const target = ev.target;
   const dataType = target.getAttribute("data-type");
   const contentDocument = iframeAppData.contentDocument;
-  if (!dataType && !contentDocument) return;
+  if (!dataType || !contentDocument) return;
   const wd = iframeAppData.dataIframe;
   wd.dataId = target.id;
   wd.dataType = dataType;
@@ -548,8 +553,7 @@ function addItemStart(ev) {
   target.after(dragItem);
   addItem.dragItem = dragItem;
   dragItem.style.position = "absolute";
-  dragItem.style.left = `${addItem.clientX - dragItem.offsetWidth / 2}px`;
-  dragItem.style.top = `${addItem.clientY - dragItem.offsetHeight / 2}px`;
+  setStyleItem();
 }
 
 document.addEventListener("DOMContentLoaded", () => {

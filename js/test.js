@@ -1,8 +1,11 @@
 const getRandomId = () => {
-  return (
-    "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)] +
-    crypto.randomUUID().slice(0, 8)
-  );
+  const digits = "abcdefghijklmnopqrstuvwxyz";
+  const n = digits.length;
+  let uuid = "";
+  for (let i = 0; i < 8 + Math.floor(Math.random() * (n / 2)); i++) {
+    uuid += digits[Math.floor(Math.random() * n)];
+  }
+  return uuid;
 };
 
 const wdtkt = `${getRandomId()}`;
